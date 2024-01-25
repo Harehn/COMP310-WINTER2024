@@ -94,6 +94,14 @@ int interpreter(char* command_args[], int args_size){
 		return system(buffer);
 
 	}
+	else if (strcmp(command_args[0], "my_cat") == 0) {
+		if (args_size != 2) return badcommand();
+		char buffer[100];
+		strcpy(buffer, "cat ");
+		strcat(buffer, command_args[1]);
+		return system(buffer);
+
+	}
 	else return badcommand();
 }
 
