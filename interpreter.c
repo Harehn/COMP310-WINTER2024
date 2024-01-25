@@ -85,7 +85,16 @@ int interpreter(char* command_args[], int args_size){
 		if (args_size != 2) return badcommand();
 		return cd(command_args[1]);
 
-	} else return badcommand();
+	}
+	else if (strcmp(command_args[0], "my_mkdir") == 0) {
+		if (args_size != 2) return badcommand();
+		char buffer[100];
+		strcpy(buffer, "mkdir ");
+		strcat(buffer, command_args[1]);
+		return system(buffer);
+
+	}
+	else return badcommand();
 }
 
 int help(){
