@@ -6,7 +6,7 @@
 #include "shellmemory.h"
 #include "shell.h"
 
-int MAX_ARGS_SIZE = 3;
+int MAX_ARGS_SIZE = 7;
 
 int badcommand(){
 	printf("%s\n", "Unknown Command");
@@ -29,6 +29,7 @@ int badcommandFileDoesNotExist();
 // Interpret commands and their arguments
 int interpreter(char* command_args[], int args_size){
 	int i;
+	printf("%d\n", args_size);
 
 	if ( args_size < 1 || args_size > MAX_ARGS_SIZE){
 		return badcommand();
@@ -50,7 +51,12 @@ int interpreter(char* command_args[], int args_size){
 
 	} else if (strcmp(command_args[0], "set")==0) {
 		//set
-		if (args_size != 3) return badcommand();	
+		//TODO: test this
+		if (args_size < 3) return badcommand();	
+		for (i = 3; i < args_size; i++) {
+			command_args[2] = strcat(command_args[2], " ");
+			command_args[2] = strcat(command_args[2], command_args[i]);
+		} 
 		return set(command_args[1], command_args[2]);
 	
 	} else if (strcmp(command_args[0], "print")==0) {
