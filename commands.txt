@@ -1,6 +1,8 @@
 set mary 0
 echo mary
 echo $mary
+my_cd does_not_exist
 my_ls
-my_touch example
+my_cd example
 my_ls
+my_cd lol

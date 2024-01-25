@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <unistd.h> 
+#include <unistd.h> 
 //#include <sys/stat.h> // these could be useful?
 #include "shellmemory.h"
 #include "shell.h"
@@ -26,7 +26,8 @@ int print(char* var);
 int run(char* script);
 int badcommandFileDoesNotExist();
 int echo(char* var);
-int touch(char *name);
+int touch(char* name);
+int cd(char* dir);
 
 // Interpret commands and their arguments
 int interpreter(char* command_args[], int args_size){
@@ -79,6 +80,10 @@ int interpreter(char* command_args[], int args_size){
 	} else if (strcmp(command_args[0], "my_touch") == 0) {
 		if (args_size != 2) return badcommand();
 		return touch(command_args[1]);
+
+	} else if (strcmp(command_args[0], "my_cd") == 0) {
+		if (args_size != 2) return badcommand();
+		return cd(command_args[1]);
 
 	} else return badcommand();
 }
@@ -164,6 +169,15 @@ int echo(char *var) {
 }
 
 int touch(char *name) {
-	fopen(name, "w");
+	fclose(fopen(name, "w"));
+	return 0;
+}
+
+int cd(char *dir) {
+	int code = chdir(dir);
+	if (code == -1) {
+		printf("Bad command: my_cd\n");
+		return 3;
+	}
 	return 0;
 }
