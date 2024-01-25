@@ -67,7 +67,12 @@ int interpreter(char* command_args[], int args_size){
 		if (args_size != 2) return badcommand();
 		return run(command_args[1]);
 	
-	} else return badcommand();
+	} else if (strcmp(command_args[0], "my_ls") == 0) {
+		if (args_size != 1) return badcommand();
+		return system("ls");
+
+	}
+	else return badcommand();
 }
 
 int help(){
