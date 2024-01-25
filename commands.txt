@@ -1,0 +1,4 @@
+set mary 0
+echo mary
+echo $mary
+my_ls

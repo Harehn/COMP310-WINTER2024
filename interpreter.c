@@ -25,11 +25,11 @@ int set(char* var, char* value);
 int print(char* var);
 int run(char* script);
 int badcommandFileDoesNotExist();
+int echo(char* var);
 
 // Interpret commands and their arguments
 int interpreter(char* command_args[], int args_size){
 	int i;
-	printf("%d\n", args_size);
 
 	if ( args_size < 1 || args_size > MAX_ARGS_SIZE){
 		return badcommand();
@@ -71,8 +71,11 @@ int interpreter(char* command_args[], int args_size){
 		if (args_size != 1) return badcommand();
 		return system("ls");
 
-	}
-	else return badcommand();
+	} else if (strcmp(command_args[0], "echo")==0) {
+		if (args_size != 2) return badcommand();
+		return  echo(command_args[1]);
+
+	} else return badcommand();
 }
 
 int help(){
@@ -80,9 +83,11 @@ int help(){
 	char help_string[] = "COMMAND			DESCRIPTION\n \
 help			Displays all the commands\n \
 quit			Exits / terminates the shell with “Bye!”\n \
-set VAR STRING		Assigns a value to shell memory\n \
+set VAR STRING		Assigns a value to shell memory with up to 5 tokens\n \
 print VAR		Displays the STRING assigned to VAR\n \
-run SCRIPT.TXT		Executes the file SCRIPT.TXT\n ";
+run SCRIPT.TXT		Executes the file SCRIPT.TXT\n \
+echo STRING/$VAR	Displays the STRING or the assigned VAR if denoted with a $\n \
+my_ls			Lists all files in the present directory\n ";
 	printf("%s\n", help_string);
 	return 0;
 }
@@ -133,4 +138,21 @@ int run(char* script){
     fclose(p);
 
 	return errCode;
+}
+
+int echo(char *var) {
+	if (var[0] == '$') {
+		char tmp[100];
+		strcpy(tmp, var+1);
+		char result[100];
+		strcpy(result, mem_get_value(tmp));
+		if (strcmp(result, "Variable does not exist") == 0) {
+			printf("\n");
+		} else {
+			printf("%s\n", result);
+		}
+	} else {
+		printf("%s\n", var);
+	}
+	return 0;
 }
