@@ -26,6 +26,7 @@ int print(char* var);
 int run(char* script);
 int badcommandFileDoesNotExist();
 int echo(char* var);
+int touch(char *name);
 
 // Interpret commands and their arguments
 int interpreter(char* command_args[], int args_size){
@@ -51,7 +52,7 @@ int interpreter(char* command_args[], int args_size){
 
 	} else if (strcmp(command_args[0], "set")==0) {
 		//set
-		//TODO: test this
+		//TODO: test this with larger tokens
 		if (args_size < 3) return badcommand();	
 		for (i = 3; i < args_size; i++) {
 			command_args[2] = strcat(command_args[2], " ");
@@ -73,7 +74,11 @@ int interpreter(char* command_args[], int args_size){
 
 	} else if (strcmp(command_args[0], "echo")==0) {
 		if (args_size != 2) return badcommand();
-		return  echo(command_args[1]);
+		return echo(command_args[1]);
+
+	} else if (strcmp(command_args[0], "my_touch") == 0) {
+		if (args_size != 2) return badcommand();
+		return touch(command_args[1]);
 
 	} else return badcommand();
 }
@@ -87,7 +92,8 @@ set VAR STRING		Assigns a value to shell memory with up to 5 tokens\n \
 print VAR		Displays the STRING assigned to VAR\n \
 run SCRIPT.TXT		Executes the file SCRIPT.TXT\n \
 echo STRING/$VAR	Displays the STRING or the assigned VAR if denoted with a $\n \
-my_ls			Lists all files in the present directory\n ";
+my_ls			Lists all files in the present directory\n \
+my_touch STRING	Creates a new file STRING in the current directory\n ";
 	printf("%s\n", help_string);
 	return 0;
 }
@@ -154,5 +160,10 @@ int echo(char *var) {
 	} else {
 		printf("%s\n", var);
 	}
+	return 0;
+}
+
+int touch(char *name) {
+	fopen(name, "w");
 	return 0;
 }
