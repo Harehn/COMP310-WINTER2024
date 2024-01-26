@@ -28,6 +28,7 @@ int badcommandFileDoesNotExist();
 int echo(char* var);
 int touch(char* name);
 int cd(char* dir);
+int cat(char* file);
 
 // Interpret commands and their arguments
 int interpreter(char* command_args[], int args_size){
@@ -53,7 +54,6 @@ int interpreter(char* command_args[], int args_size){
 
 	} else if (strcmp(command_args[0], "set")==0) {
 		//set
-		//TODO: test this with larger tokens
 		if (args_size < 3) return badcommand();	
 		for (i = 3; i < args_size; i++) {
 			command_args[2] = strcat(command_args[2], " ");
@@ -62,31 +62,38 @@ int interpreter(char* command_args[], int args_size){
 		return set(command_args[1], command_args[2]);
 	
 	} else if (strcmp(command_args[0], "print")==0) {
+		//print
 		if (args_size != 2) return badcommand();
 		return print(command_args[1]);
 	
 	} else if (strcmp(command_args[0], "run")==0) {
+		//run
 		if (args_size != 2) return badcommand();
 		return run(command_args[1]);
 	
 	} else if (strcmp(command_args[0], "my_ls") == 0) {
+		//my_ls
 		if (args_size != 1) return badcommand();
 		return system("ls");
 
 	} else if (strcmp(command_args[0], "echo")==0) {
+		//echo
 		if (args_size != 2) return badcommand();
 		return echo(command_args[1]);
 
 	} else if (strcmp(command_args[0], "my_touch") == 0) {
+		//my_touch
 		if (args_size != 2) return badcommand();
 		return touch(command_args[1]);
 
 	} else if (strcmp(command_args[0], "my_cd") == 0) {
+		//my_cd
 		if (args_size != 2) return badcommand();
 		return cd(command_args[1]);
 
 	}
 	else if (strcmp(command_args[0], "my_mkdir") == 0) {
+		//my_mkdir
 		if (args_size != 2) return badcommand();
 		char buffer[100];
 		strcpy(buffer, "mkdir ");
@@ -95,12 +102,15 @@ int interpreter(char* command_args[], int args_size){
 
 	}
 	else if (strcmp(command_args[0], "my_cat") == 0) {
+		//my_cat
 		if (args_size != 2) return badcommand();
-		char buffer[100];
-		strcpy(buffer, "cat ");
-		strcat(buffer, command_args[1]);
-		return system(buffer);
-
+		if (cat(command_args[1]) == 0) {
+			char buffer[100];
+			strcpy(buffer, "cat ");
+			strcat(buffer, command_args[1]);
+			return system(buffer);
+		}
+		return 3;
 	}
 	else return badcommand();
 }
@@ -115,7 +125,10 @@ print VAR		Displays the STRING assigned to VAR\n \
 run SCRIPT.TXT		Executes the file SCRIPT.TXT\n \
 echo STRING/$VAR	Displays the STRING or the assigned VAR if denoted with a $\n \
 my_ls			Lists all files in the present directory\n \
-my_touch STRING	Creates a new file STRING in the current directory\n ";
+my_mkdir STRING	Creates a new directory STRING\n \
+my_touch STRING	Creates a new file STRING in the current directory\n \
+my_cd STRING 		Moves the directory STRING\n \
+my_cat STRING		Opens the file STRING and prints the content\n ";
 	printf("%s\n", help_string);
 	return 0;
 }
@@ -168,7 +181,7 @@ int run(char* script){
 	return errCode;
 }
 
-int echo(char *var) {
+int echo(char* var) {
 	if (var[0] == '$') {
 		char tmp[100];
 		strcpy(tmp, var+1);
@@ -185,15 +198,27 @@ int echo(char *var) {
 	return 0;
 }
 
-int touch(char *name) {
+int touch(char* name) {
 	fclose(fopen(name, "w"));
 	return 0;
 }
 
-int cd(char *dir) {
+int cd(char* dir) {
 	int code = chdir(dir);
 	if (code == -1) {
 		printf("Bad command: my_cd\n");
+		return 3;
+	}
+	return 0;
+}
+
+int cat(char* file) {
+	FILE *fp;
+
+	if (fp = fopen(file, "r")) {
+		fclose(fp);
+	} else {
+		printf("Bad command: my_cat\n");
 		return 3;
 	}
 	return 0;
