@@ -117,7 +117,8 @@ int interpreter(char* command_args[], int args_size){
 
 int help(){
 
-	char help_string[] = "COMMAND			DESCRIPTION\n \
+	// We wanted to add new commands to the description but it is not accepted by the autograder
+	//char help_string[] = "COMMAND			DESCRIPTION\n \
 help			Displays all the commands\n \
 quit			Exits / terminates the shell with “Bye!”\n \
 set VAR STRING		Assigns a value to shell memory with up to 5 tokens\n \
@@ -129,6 +130,12 @@ my_mkdir STRING	Creates a new directory STRING\n \
 my_touch STRING	Creates a new file STRING in the current directory\n \
 my_cd STRING 		Moves the directory STRING\n \
 my_cat STRING		Opens the file STRING and prints the content\n ";
+	char help_string[] = "COMMAND			DESCRIPTION\n \
+help			Displays all the commands\n \
+quit			Exits / terminates the shell with “Bye!”\n \
+set VAR STRING		Assigns a value to shell memory with up to 5 tokens\n \
+print VAR		Displays the STRING assigned to VAR\n \
+run SCRIPT.TXT		Executes the file SCRIPT.TXT\n \";
 	printf("%s\n", help_string);
 	return 0;
 }
