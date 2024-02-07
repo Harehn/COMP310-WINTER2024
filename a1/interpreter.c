@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h> 
-//#include <sys/stat.h> // these could be useful?
+//#include <sys/stat.h> // import was left unused
 #include "shellmemory.h"
 #include "shell.h"
 
