@@ -13,6 +13,11 @@ int badcommand(){
 	return 1;
 }
 
+int badsetcommand() {
+	printf("%s\n", "Bad command: set");
+	return 1;
+}
+
 // For run command only
 int badcommandFileDoesNotExist(){
 	printf("%s\n", "Bad command: File not found");
@@ -54,7 +59,7 @@ int interpreter(char* command_args[], int args_size){
 
 	} else if (strcmp(command_args[0], "set")==0) {
 		//set
-		if (args_size < 3) return badcommand();	
+		if (args_size < 3) return badsetcommand();	
 		for (i = 3; i < args_size; i++) {
 			command_args[2] = strcat(command_args[2], " ");
 			command_args[2] = strcat(command_args[2], command_args[i]);
