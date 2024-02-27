@@ -154,6 +154,7 @@ run SCRIPT.TXT		Executes the file SCRIPT.TXT\n ";
 int quit(){
 	printf("%s\n", "Bye!");
 	ready_queue_destory();
+	remove_store();
 	exit(0);
 }
 

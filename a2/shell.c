@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h> 
 #include <unistd.h>
+#include <sys/stat.h>
 #include "interpreter.h"
 #include "shellmemory.h"
 #include "pcb.h"
@@ -10,8 +11,12 @@
 
 int MAX_USER_INPUT = 1000;
 int parseInput(char ui[]);
+int init_store();
+int remove_store();
 
 int main(int argc, char *argv[]) {
+    init_store();
+
 	printf("%s\n", "Shell v2.0\n");
 
 	char prompt = '$';  				// Shell prompt
@@ -76,4 +81,19 @@ int parseInput(char *ui) {
     }
     errorCode = interpreter(words, w);
     return errorCode;
+}
+
+int init_store() {
+    struct stat st = {0};
+    if (stat("backing_store", &st) == -1) {
+        system("mkdir backing_store");
+    } else {
+        system("rm backing_store/*");
+    }
+    return 0;
+}
+
+int remove_store() {
+    rmdir("backing_store");
+    return 0;
 }
