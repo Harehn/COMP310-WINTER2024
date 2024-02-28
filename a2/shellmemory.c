@@ -3,14 +3,16 @@
 #include<stdio.h>
 #include<stdbool.h>
 
-#define SHELL_MEM_LENGTH 1000
-
+#define VAR_MEM_SIZE 100
+#define FRAME_SIZE 300
+#define SHELL_MEM_LENGTH VAR_MEM_SIZE+FRAME_SIZE
 
 struct memory_struct{
 	char *var;
 	char *value;
 };
 
+// The shell memory is now composed of 1) the variable store 2) the frame store
 struct memory_struct shellmemory[SHELL_MEM_LENGTH];
 
 // Helper functions
@@ -37,10 +39,11 @@ char *extract(char *model) {
 
 
 // Shell memory functions
+// These functions have been modified to loop through only the variable store part of the shell memory
 
 void mem_init(){
 	int i;
-	for (i=0; i<1000; i++){		
+	for (i=0; i<VAR_MEM_SIZE; i++){		
 		shellmemory[i].var = "none";
 		shellmemory[i].value = "none";
 	}
@@ -49,7 +52,7 @@ void mem_init(){
 // Set key value pair
 void mem_set_value(char *var_in, char *value_in) {
 	int i;
-	for (i=0; i<1000; i++){
+	for (i=0; i<VAR_MEM_SIZE; i++){
 		if (strcmp(shellmemory[i].var, var_in) == 0){
 			shellmemory[i].value = strdup(value_in);
 			return;
@@ -57,7 +60,7 @@ void mem_set_value(char *var_in, char *value_in) {
 	}
 
 	//Value does not exist, need to find a free spot.
-	for (i=0; i<1000; i++){
+	for (i=0; i<VAR_MEM_SIZE; i++){
 		if (strcmp(shellmemory[i].var, "none") == 0){
 			shellmemory[i].var = strdup(var_in);
 			shellmemory[i].value = strdup(value_in);
@@ -72,7 +75,7 @@ void mem_set_value(char *var_in, char *value_in) {
 //get value based on input key
 char *mem_get_value(char *var_in) {
 	int i;
-	for (i=0; i<1000; i++){
+	for (i=0; i<VAR_MEM_SIZE; i++){
 		if (strcmp(shellmemory[i].var, var_in) == 0){
 			return strdup(shellmemory[i].value);
 		} 
@@ -120,7 +123,7 @@ int load_file(FILE* fp, int* pStart, int* pEnd, char* filename)
     int error_code = 0;
 	bool hasSpaceLeft = false;
 	bool flag = true;
-	i=101;
+	i=VAR_MEM_SIZE;  // Only search through the frame store
 	size_t candidate;
 	while(flag){
 		flag = false;

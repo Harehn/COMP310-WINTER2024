@@ -83,6 +83,7 @@ int parseInput(char *ui) {
     return errorCode;
 }
 
+// Initializes backing_store, clearing the directory if it already exists
 int init_store() {
     struct stat st = {0};
     if (stat("backing_store", &st) == -1) {
