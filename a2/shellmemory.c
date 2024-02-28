@@ -3,6 +3,8 @@
 #include<stdio.h>
 #include<stdbool.h>
 
+void mem_free_lines_between(int start, int end); // declare now to use later
+
 #define VAR_MEM_SIZE 100
 #define FRAME_SIZE 300
 #define SHELL_MEM_LENGTH VAR_MEM_SIZE+FRAME_SIZE
@@ -39,11 +41,20 @@ char *extract(char *model) {
 
 
 // Shell memory functions
+
+void mem_init(){  // Initialize the frame and variable store
+	int i;
+	for (i=0; i<SHELL_MEM_LENGTH; i++){		
+		shellmemory[i].var = "none";
+		shellmemory[i].value = "none";
+	}
+}
+
 // These functions have been modified to loop through only the variable store part of the shell memory
 
-void mem_init(){
+void mem_reset() {
 	int i;
-	for (i=0; i<VAR_MEM_SIZE; i++){		
+	for (i=0; i<VAR_MEM_SIZE; i++) {
 		shellmemory[i].var = "none";
 		shellmemory[i].value = "none";
 	}
@@ -87,7 +98,7 @@ char *mem_get_value(char *var_in) {
 
 void printShellMemory(){
 	int count_empty = 0;
-	for (int i = 0; i < SHELL_MEM_LENGTH; i++){
+	for (int i = 0; i < VAR_MEM_SIZE; i++){
 		if(strcmp(shellmemory[i].var,"none") == 0){
 			count_empty++;
 		}
@@ -95,7 +106,7 @@ void printShellMemory(){
 			printf("\nline %d: key: %s\t\tvalue: %s\n", i, shellmemory[i].var, shellmemory[i].value);
 		}
     }
-	printf("\n\t%d lines in total, %d lines in use, %d lines free\n\n", SHELL_MEM_LENGTH, SHELL_MEM_LENGTH-count_empty, count_empty);
+	printf("\n\t%d lines in total, %d lines in use, %d lines free\n\n", VAR_MEM_SIZE, VAR_MEM_SIZE-count_empty, count_empty);
 }
 
 

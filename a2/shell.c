@@ -89,7 +89,7 @@ int init_store() {
     if (stat("backing_store", &st) == -1) {
         system("mkdir backing_store");
     } else {
-        system("rm backing_store/*");
+        system("rm -f backing_store/*");
     }
     return 0;
 }
