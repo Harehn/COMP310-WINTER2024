@@ -3,8 +3,6 @@
 #include<stdio.h>
 #include<stdbool.h>
 
-void mem_free_lines_between(int start, int end); // declare now to use later
-
 #define VAR_MEM_SIZE 100
 #define FRAME_SIZE 300
 #define SHELL_MEM_LENGTH VAR_MEM_SIZE+FRAME_SIZE
@@ -111,84 +109,67 @@ void printShellMemory(){
 
 
 /*
- * Function:  addFileToMem 
- * 	Added in A2
+ * Function:  load_file
  * --------------------
  * Load the source code of the file fp into the shell memory:
  * 		Loading format - var stores fileID, value stores a line
- *		Note that the first 100 lines are for set command, the rests are for run and exec command
+ *		The lines set for the variable store are ignored, only searching through the frame store
  *
  *  pStart: This function will store the first line of the loaded file 
  * 			in shell memory in here
- *	pEnd: This function will store the last line of the loaded file 
- 			in shell memory in here
+ *	pOffset_End: This function wil store the last line in the offset of the
+ *			final page in here
+ *  page_table: This function will store pointers from the pages to the the
+ * 			location of the code in shell memory here
  *  fileID: Input that need to provide when calling the function, 
- 			stores the ID of the file
+ *			stores the ID of the file
  * 
- * returns: error code, 21: no space left
+ * returns: 0
  */
-int load_file(FILE* fp, int* pStart, int* pEnd, char* filename)
+int load_file(FILE* fp, int* pEnd, int* pOffset_End, int* page_table, char* filename)
 {
 	char *line;
     size_t i;
-    int error_code = 0;
-	bool hasSpaceLeft = false;
 	bool flag = true;
-	i=VAR_MEM_SIZE;  // Only search through the frame store
-	size_t candidate;
+	i=VAR_MEM_SIZE;
+	*pOffset_End = 3;
+	int counter = 0;  // Counts number of pages
 	while(flag){
-		flag = false;
-		for (i; i < SHELL_MEM_LENGTH; i++){
+		if (feof(fp)) {
+			break;  // Avoid incrementing counter if there's no more to read
+		}
+		for (i; i < SHELL_MEM_LENGTH; i+=3){
 			if(strcmp(shellmemory[i].var,"none") == 0){
-				*pStart = (int)i;
-				hasSpaceLeft = true;
+				page_table[counter] = i;
+				counter++;
 				break;
 			}
 		}
-		candidate = i;
-		for(i; i < SHELL_MEM_LENGTH; i++){
-			if(strcmp(shellmemory[i].var,"none") != 0){
-				flag = true;
-				break;
-			}
-		}
-	}
-	i = candidate;
-	//shell memory is full
-	if(hasSpaceLeft == 0){
-		error_code = 21;
-		return error_code;
-	}
-    
-    for (size_t j = i; j < SHELL_MEM_LENGTH; j++){
-        if(feof(fp))
-        {
-            *pEnd = (int)j-1;
-            break;
-        }else{
-			line = calloc(1, SHELL_MEM_LENGTH);
-			if (fgets(line, SHELL_MEM_LENGTH, fp) == NULL)
+		for (size_t j = i; j < i+3; j++){
+			if(feof(fp))
 			{
-				continue;
+				*pOffset_End = (int)(j-i);
+				flag = false;
+				break;
+			}else{
+				line = calloc(1, SHELL_MEM_LENGTH);
+				if (fgets(line, SHELL_MEM_LENGTH, fp) == NULL)
+				{
+					continue;
+				}
+				shellmemory[j].var = strdup(filename);
+				shellmemory[j].value = strndup(line, strlen(line));
+				free(line);
 			}
-			shellmemory[j].var = strdup(filename);
-            shellmemory[j].value = strndup(line, strlen(line));
-			free(line);
-        }
-    }
-
-	//no space left to load the entire file into shell memory
-	if(!feof(fp)){
-		error_code = 21;
-		//clean up the file in memory
-		for(int j = 1; i <= SHELL_MEM_LENGTH; i ++){
-			shellmemory[j].var = "none";
-			shellmemory[j].value = "none";
-    	}
-		return error_code;
+		}
 	}
-	//printShellMemory();
-    return error_code;
+	// Set end offset to 3 for when the process is freed
+	if (*pOffset_End == 0) {
+		*pOffset_End = 3;
+		printf("changed offset to %d\n", *pOffset_End);
+	}
+	*pEnd = counter;
+	return 0;
 }
 
 

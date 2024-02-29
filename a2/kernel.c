@@ -18,22 +18,19 @@ bool in_background = false;
 
 int process_initialize(char *filename){
     FILE *fp, *cp;
-    int* start = (int*)malloc(sizeof(int));
     int* end = (int*)malloc(sizeof(int));
+    int* offset_end = (int*)malloc(sizeof(int));
     
+    // Check if file exists
     fp = fopen(filename, "rt");
     if(fp == NULL){
 		return FILE_DOES_NOT_EXIST;
     }
 
     char pid[3];
-    sprintf(pid, "%d", get_nextPID());
+    sprintf(pid, "%d", getPID());
 
-    int error_code = load_file(fp, start, end, filename);
-    if(error_code != 0){
-        fclose(fp);
-        return FILE_ERROR;
-    }
+    // Copy file into backing store, using PID as the unique identifier
     char* newfile = (char*)malloc(strlen("./backing_store")+strlen(filename)+3*sizeof(int));
     strcpy(newfile, "./backing_store/");
     strcat(newfile, filename);
@@ -42,16 +39,29 @@ int process_initialize(char *filename){
     fp = fopen(filename, "rt");
     char c;
     c = fgetc(fp);
+    int line_count = 1;
     while (c != EOF)
     {
         fputc(c, (FILE *)cp);
-        printf("%c", c);
+        if (c == '\n') {
+            line_count += 1;
+        }
         c = fgetc(fp);
+    }
+    int* page_table = (int*)(malloc(sizeof(int)*(line_count/3)));
+    fclose(cp);
+
+    // Load backing store copy into frame store
+    cp = fopen(newfile, "rt");
+    int error_code = load_file(cp, end, offset_end, page_table, newfile);
+    if(error_code != 0){
+        fclose(cp);
+        return FILE_ERROR;
     }
     fclose(cp);
 
     free(newfile);
-    PCB* newPCB = makePCB(*start,*end);
+    PCB* newPCB = makePCB(*end, *offset_end, page_table, page_table+*end);
     QueueNode *node = malloc(sizeof(QueueNode));
     node->pcb = newPCB;
 
@@ -61,42 +71,52 @@ int process_initialize(char *filename){
     return 0;
 }
 
-int shell_process_initialize(){
-    //Note that "You can assume that the # option will only be used in batch mode."
-    //So we know that the input is a file, we can directly load the file into ram
-    int* start = (int*)malloc(sizeof(int));
-    int* end = (int*)malloc(sizeof(int));
-    int error_code = 0;
-    error_code = load_file(stdin, start, end, "_SHELL");
-    if(error_code != 0){
-        return error_code;
-    }
-    PCB* newPCB = makePCB(*start,*end);
-    newPCB->priority = true;
-    QueueNode *node = malloc(sizeof(QueueNode));
-    node->pcb = newPCB;
+// int shell_process_initialize(){
+//     //Note that "You can assume that the # option will only be used in batch mode."
+//     //So we know that the input is a file, we can directly load the file into ram
+//     int* start = (int*)malloc(sizeof(int));
+//     int* end = (int*)malloc(sizeof(int));
+//     int error_code = 0;
+//     error_code = load_file(stdin, start, end, "_SHELL");
+//     if(error_code != 0){
+//         return error_code;
+//     }
+//     PCB* newPCB = makePCB(*start,*end);
+//     newPCB->priority = true;
+//     QueueNode *node = malloc(sizeof(QueueNode));
+//     node->pcb = newPCB;
 
-    ready_queue_add_to_head(node);
+//     ready_queue_add_to_head(node);
 
-    freopen("/dev/tty", "r", stdin);
-    return 0;
-}
+//     freopen("/dev/tty", "r", stdin);
+//     return 0;
+// }
 
 bool execute_process(QueueNode *node, int quanta){
     char *line = NULL;
     PCB *pcb = node->pcb;
     for(int i=0; i<quanta; i++){
-        line = mem_get_value_at_line(pcb->PC++);
-        in_background = true;
-        if(pcb->priority) {
-            pcb->priority = false;
-        }
-        if(pcb->PC>pcb->end){
+        line = mem_get_value_at_line(pcb->page_table[pcb->PC] + pcb->offset++);
+
+        // ! Order of this section was changed, make sure this is okay
+        // Check that there are no more pages or the current page does not have more lines
+        if(pcb->PC==pcb->end-1 && pcb->offset==pcb->offset_end){
             parseInput(line);
             terminate_process(node);
             in_background = false;
             return true;
         }
+
+        // Only move to the next page once the current one is done loading
+        if (pcb->offset == 3) {
+            pcb->offset = 0;
+            pcb->PC++;
+        }
+        in_background = true;
+        if(pcb->priority) {
+            pcb->priority = false;
+        }
+        
         parseInput(line);
         in_background = false;
     }

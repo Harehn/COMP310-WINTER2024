@@ -15,13 +15,16 @@ typedef struct
     bool priority;
     int pid;
     int PC;
-    int start;
     int end;
+    int offset_end;
+    int* page_table;
+    int offset;
+    int* table_end;
     int job_length_score;
 }PCB;
 
 int generatePID();
-int get_nextPID();
-PCB * makePCB(int start, int end);
+int getPID();
+PCB * makePCB(int end, int offset_end, int* table, int* table_end);
 
 #endif

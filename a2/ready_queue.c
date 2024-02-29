@@ -66,7 +66,17 @@ void print_ready_queue(){
 
 void terminate_process(QueueNode *node){
     //node should not be in the ready queue
-    mem_free_lines_between(node->pcb->start, node->pcb->end);
+    PCB* pcb = node->pcb;
+    int* iter = pcb->page_table;
+    // Iterate through page table to free memory
+    while (iter < pcb->table_end - 1) {
+        int i = *iter;
+        mem_free_lines_between(i, i+2);
+        iter++;
+    }
+    // Only free the lines in the last page that contain script
+    int i = *iter;
+    mem_free_lines_between(i, i+pcb->offset_end-1);
     free(node);
 }
 

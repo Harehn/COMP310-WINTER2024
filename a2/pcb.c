@@ -10,18 +10,21 @@ int generatePID(){
     return pid_counter++;
 }
 
-int get_nextPID() {
-    return pid_counter + 1;
+int getPID() {
+    return pid_counter;
 }
 
 //In this implementation, Pid is the same as file ID 
-PCB* makePCB(int start, int end){
-    PCB * newPCB = malloc(sizeof(PCB));
+PCB* makePCB(int end, int offset_end, int* table, int* table_end){
+    PCB * newPCB = malloc(sizeof(PCB)+sizeof(table));
     newPCB->pid = generatePID();
-    newPCB->PC = start;
-    newPCB->start  = start;
+    newPCB->PC = 0;
     newPCB->end = end;
-    newPCB->job_length_score = 1+end-start;
+    newPCB->offset_end = offset_end;
+    newPCB->page_table = table; 
+    newPCB->offset = 0;
+    newPCB->table_end = table_end;
+    // newPCB->job_length_score = 1+end-start;
     newPCB->priority = false;
     return newPCB;
 }
