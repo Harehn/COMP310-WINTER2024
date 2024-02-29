@@ -3,8 +3,8 @@
 #include<stdio.h>
 #include<stdbool.h>
 
-#define VAR_MEM_SIZE 100
-#define FRAME_SIZE 300
+//#define VAR_MEM_SIZE 100
+//#define FRAME_SIZE 300
 #define SHELL_MEM_LENGTH VAR_MEM_SIZE+FRAME_SIZE
 
 struct memory_struct{
