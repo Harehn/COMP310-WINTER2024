@@ -273,6 +273,7 @@ int exec(char *fname1, char *fname2, char *fname3) {
 	if(error_code != 0){
 		return handle_error(error_code);
 	}
+	resetmem();
 }
 
 int resetmem() {

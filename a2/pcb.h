@@ -21,5 +21,7 @@ typedef struct
 }PCB;
 
 int generatePID();
+int get_nextPID();
 PCB * makePCB(int start, int end);
+
 #endif

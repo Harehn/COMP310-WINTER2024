@@ -25,6 +25,10 @@ int process_initialize(char *filename){
     if(fp == NULL){
 		return FILE_DOES_NOT_EXIST;
     }
+
+    char pid[3];
+    sprintf(pid, "%d", get_nextPID());
+
     int error_code = load_file(fp, start, end, filename);
     if(error_code != 0){
         fclose(fp);
@@ -33,7 +37,18 @@ int process_initialize(char *filename){
     char* newfile = (char*)malloc(strlen("./backing_store")+strlen(filename)+3*sizeof(int));
     strcpy(newfile, "./backing_store/");
     strcat(newfile, filename);
-    cp = fopen(newfile, "wt");
+    strcat(newfile, pid);
+    cp = fopen(newfile, "w");
+    fp = fopen(filename, "rt");
+    char c;
+    c = fgetc(fp);
+    while (c != EOF)
+    {
+        fputc(c, (FILE *)cp);
+        printf("%c", c);
+        c = fgetc(fp);
+    }
+    fclose(cp);
 
     free(newfile);
     PCB* newPCB = makePCB(*start,*end);
