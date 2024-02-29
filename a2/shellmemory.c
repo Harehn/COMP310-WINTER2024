@@ -5,8 +5,8 @@
 
 void mem_free_lines_between(int start, int end); // declare now to use later
 
-#define VAR_MEM_SIZE 100
-#define FRAME_SIZE 300
+//#define VAR_MEM_SIZE 100
+//#define FRAME_SIZE 300
 #define SHELL_MEM_LENGTH VAR_MEM_SIZE+FRAME_SIZE
 
 struct memory_struct{
@@ -129,6 +129,8 @@ void printShellMemory(){
  */
 int load_file(FILE* fp, int* pStart, int* pEnd, char* filename)
 {
+	printf("VAR_MEM_SIZE: %d\n", VAR_MEM_SIZE);
+	printf("FRAME_SIZE: %d\n", FRAME_SIZE);
 	char *line;
     size_t i;
     int error_code = 0;
