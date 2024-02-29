@@ -95,6 +95,7 @@ int init_store() {
 }
 
 int remove_store() {
+    system("rm -f backing_store/*");
     rmdir("backing_store");
     return 0;
 }

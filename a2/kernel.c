@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <sys/stat.h>
 #include "pcb.h"
 #include "kernel.h"
 #include "shell.h"
@@ -16,7 +17,7 @@ bool debug = false;
 bool in_background = false;
 
 int process_initialize(char *filename){
-    FILE* fp;
+    FILE *fp, *cp;
     int* start = (int*)malloc(sizeof(int));
     int* end = (int*)malloc(sizeof(int));
     
@@ -29,6 +30,12 @@ int process_initialize(char *filename){
         fclose(fp);
         return FILE_ERROR;
     }
+    char* newfile = (char*)malloc(strlen("./backing_store")+strlen(filename)+3*sizeof(int));
+    strcpy(newfile, "./backing_store/");
+    strcat(newfile, filename);
+    cp = fopen(newfile, "wt");
+
+    free(newfile);
     PCB* newPCB = makePCB(*start,*end);
     QueueNode *node = malloc(sizeof(QueueNode));
     node->pcb = newPCB;
