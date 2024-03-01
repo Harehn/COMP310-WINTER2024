@@ -165,8 +165,8 @@ bool copy_to_mem(int index, FILE* fp, char* filename, size_t i) {
 	char* line;
 	fseek(fp, 0, SEEK_SET);
 	for (int line_num = 0; line_num < index; line_num++) {
-		line = calloc(1, SHELL_MEM_LENGTH);
-		fgets(line, SHELL_MEM_LENGTH, fp);
+		line = calloc(1, SHELL_MEM_LENGTH + 100);
+		fgets(line, SHELL_MEM_LENGTH + 100, fp);
 		free(line);
 	}
 
@@ -175,8 +175,8 @@ bool copy_to_mem(int index, FILE* fp, char* filename, size_t i) {
 	for (size_t j = i; j < i+3; j++){
 		age[j-VAR_MEM_SIZE] = currentAge;
 		if(!feof(fp)) {	
-			line = calloc(1, SHELL_MEM_LENGTH);
-			if (fgets(line, SHELL_MEM_LENGTH, fp) == NULL)
+			line = calloc(1, SHELL_MEM_LENGTH + 100);
+			if (fgets(line, SHELL_MEM_LENGTH + 100, fp) == NULL)
 			{
 				continue;
 			}
