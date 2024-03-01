@@ -161,10 +161,15 @@ void printShellMemory(){
  * returns:true if there is more to read in the file, false otherwise 
  */
 // ! May have to update to search for a page from the beginning
-bool copy_to_mem(FILE* fp, char* filename, size_t i) {
+bool copy_to_mem(int index, FILE* fp, char* filename, size_t i) {
 	//start from the beginning
 	//loop until page number
-	char *line;
+	char* line;
+	fseek(fp, 0, SEEK_SET);
+	for (int line_num; line_num < index; line_num++) {
+		line = calloc(1, SHELL_MEM_LENGTH);
+		fgets(line, SHELL_MEM_LENGTH, fp);
+	}
 	increaseAge();
 	age[i - VAR_MEM_SIZE] = currentAge;
 	increaseAge();
@@ -217,7 +222,7 @@ void replace_page(PCB* pcb, int page)
 	}
 	if (hasSpace) {
 		pcb->page_table[page] = (int)i;
-		copy_to_mem(pcb->fp, pcb->filename, i);
+		copy_to_mem(pcb->PC,pcb->fp, pcb->filename, i);
 	} else {
 		//int LRU_index = VAR_MEM_SIZE; // ! Change this later to LRU
 		//printAge();
@@ -253,7 +258,7 @@ void replace_page(PCB* pcb, int page)
 		}
 		// Copy page into memory
 		pcb->page_table[page] = LRU_index;
-		copy_to_mem(pcb->fp, pcb->filename, LRU_index);
+		copy_to_mem(pcb->PC, pcb->fp, pcb->filename, LRU_index);
 	}
 	pcb->valid_page[page] = true;
 }
