@@ -220,7 +220,8 @@ void replace_page(PCB* pcb, int page)
 		copy_to_mem(pcb->fp, pcb->filename, i);
 	} else {
 		//int LRU_index = VAR_MEM_SIZE; // ! Change this later to LRU
-		int LRU_index = getOldest();
+		//printAge();
+		int LRU_index = getOldest() + VAR_MEM_SIZE;
 		int upper_bound = 2;
 		printf("Page fault! Victim page contents: \n");
 		for (int i = LRU_index; i < LRU_index+3; i++) {
