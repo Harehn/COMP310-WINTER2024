@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "pcb.h"
 
 int pid_counter = 1;
@@ -15,16 +16,19 @@ int getPID() {
 }
 
 //In this implementation, Pid is the same as file ID 
-PCB* makePCB(int end, int offset_end, int* table, int* table_end){
-    PCB * newPCB = malloc(sizeof(PCB)+sizeof(table));
+PCB* makePCB(int page_count, int offset_end, int* table, bool* valid, char* name, FILE* fp){
+    PCB * newPCB = malloc(sizeof(PCB)+sizeof(table)+sizeof(valid)+strlen(name)+sizeof(fp)+1);
     newPCB->pid = generatePID();
     newPCB->PC = 0;
-    newPCB->end = end;
+    newPCB->page_count = page_count;
     newPCB->offset_end = offset_end;
     newPCB->page_table = table; 
     newPCB->offset = 0;
-    newPCB->table_end = table_end;
+    newPCB->valid_page = valid;
     // newPCB->job_length_score = 1+end-start;
     newPCB->priority = false;
+    newPCB->filename = (char*)malloc(strlen(name)+1);
+    strcpy(newPCB->filename, name);
+    newPCB->fp = fp;
     return newPCB;
 }

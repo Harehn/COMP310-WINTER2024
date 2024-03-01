@@ -277,5 +277,6 @@ int exec(char *fname1, char *fname2, char *fname3) {
 
 int resetmem() {
 	mem_init();
+	ready_queue_destory();  // To free up memory
 	return 0;
 }

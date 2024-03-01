@@ -18,8 +18,6 @@ bool in_background = false;
 
 int process_initialize(char *filename){
     FILE *fp, *cp;
-    int* end = (int*)malloc(sizeof(int));
-    int* offset_end = (int*)malloc(sizeof(int));
     
     // Check if file exists
     fp = fopen(filename, "rt");
@@ -48,25 +46,36 @@ int process_initialize(char *filename){
         }
         c = fgetc(fp);
     }
-    int* page_table = (int*)(malloc(sizeof(int)*(line_count/3)));
     fclose(cp);
+    
+    // Get size of page table and end marker based on line count
+    int offset_end = (line_count%3 == 0) ? 3 : line_count%3;
+    int page_count = line_count/3;
+    if (offset_end != 3) {
+        page_count += 1;
+    }
+    int* page_table = (int*)(malloc(sizeof(int)*(page_count)));
+    // Allocate default false value to valid bits
+    bool* valid_page = (bool*)calloc(page_count, sizeof(bool));
 
     // Load backing store copy into frame store
     cp = fopen(newfile, "rt");
-    int error_code = load_file(cp, end, offset_end, page_table, newfile);
+
+    PCB* newPCB = makePCB(page_count, offset_end, page_table, valid_page, newfile, cp);
+
+    int error_code = load_file(newPCB);
     if(error_code != 0){
         fclose(cp);
         return FILE_ERROR;
     }
-    fclose(cp);
+    // Leave cp open to access later when paging
 
-    free(newfile);
-    PCB* newPCB = makePCB(*end, *offset_end, page_table, page_table+*end);
-    QueueNode *node = malloc(sizeof(QueueNode));
+    QueueNode *node = malloc(sizeof(QueueNode)+sizeof(PCB));
     node->pcb = newPCB;
 
     ready_queue_add_to_tail(node);
 
+    free(newfile);
     fclose(fp);
     return 0;
 }
@@ -96,13 +105,22 @@ bool execute_process(QueueNode *node, int quanta){
     char *line = NULL;
     PCB *pcb = node->pcb;
     for(int i=0; i<quanta; i++){
+        // If page cannot be accessed, send to back of the queue and find the page
+        if (!pcb->valid_page[pcb->PC]) {
+            replace_page(pcb, pcb->PC);
+            ready_queue_add_to_tail(node);
+            return true;  // To avoid RR adding the node again
+        }
+    
         line = mem_get_value_at_line(pcb->page_table[pcb->PC] + pcb->offset++);
 
         // ! Order of this section was changed, make sure this is okay
         // Check that there are no more pages or the current page does not have more lines
-        if(pcb->PC==pcb->end-1 && pcb->offset==pcb->offset_end){
+        if(pcb->PC==pcb->page_count-1 && pcb->offset==pcb->offset_end){
             parseInput(line);
-            terminate_process(node);
+            fclose(pcb->fp);
+            free(pcb->page_table);
+            free(pcb->valid_page);
             in_background = false;
             return true;
         }

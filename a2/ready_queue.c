@@ -12,6 +12,18 @@
 
 QueueNode *head = NULL;
 
+// Searched for the corresponding process based on filename
+PCB* find_process(char* file) {
+    QueueNode *cur = head;
+    while (cur != NULL) {
+        if (strcmp(cur->pcb->filename, file) == 0) {
+            return cur->pcb;
+        }
+        cur = cur->next;
+    }
+    return NULL;
+}
+
 void ready_queue_destory()
 {
     if(!head) return;
@@ -64,12 +76,14 @@ void print_ready_queue(){
     }
 }
 
+// UPDATE: This function is not used in the assignment due to page replacement
 void terminate_process(QueueNode *node){
     //node should not be in the ready queue
     PCB* pcb = node->pcb;
     int* iter = pcb->page_table;
+    int* table_end = iter + pcb->page_count - 1;
     // Iterate through page table to free memory
-    while (iter < pcb->table_end - 1) {
+    while (iter < table_end) {
         int i = *iter;
         mem_free_lines_between(i, i+2);
         iter++;

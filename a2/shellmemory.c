@@ -2,6 +2,11 @@
 #include<string.h>
 #include<stdio.h>
 #include<stdbool.h>
+#include "ready_queue.h"
+#include "pcb.h"
+
+// To be used in other functions in shellmemory.c
+void mem_free_lines_between(int start, int end);
 
 //#define VAR_MEM_SIZE 100
 //#define FRAME_SIZE 300
@@ -107,72 +112,110 @@ void printShellMemory(){
 	printf("\n\t%d lines in total, %d lines in use, %d lines free\n\n", SHELL_MEM_LENGTH, SHELL_MEM_LENGTH-count_empty, count_empty);
 }
 
+/*
+ * Function:  copy_to_mem
+ * -----------------------
+ * Copy one page of fp to a specified index of the shell memory
+ *  	Loading format - var stores filename, value stores a line
+ * 
+ * filename:  Input that is required when calling, stores the unique file name
+ * i:  The index in the shell memory at which the page is copied
+ * 
+ * returns:true if there is more to read in the file, false otherwise 
+ */
+// ! May have to update to search for a page from the beginning
+bool copy_to_mem(FILE* fp, char* filename, size_t i) {
+	char *line;
+	for (size_t j = i; j < i+3; j++){
+		if(feof(fp))
+		{
+			return false;
+		}else{
+			line = calloc(1, SHELL_MEM_LENGTH);
+			if (fgets(line, SHELL_MEM_LENGTH, fp) == NULL)
+			{
+				continue;
+			}
+			shellmemory[j].var = strdup(filename);
+			shellmemory[j].value = strndup(line, strlen(line));
+			free(line);
+		}
+	}
+	return !feof(fp);
+}
 
 /*
- * Function:  load_file
+ * Function:  replace_page
  * --------------------
- * Load the source code of the file fp into the shell memory:
+ * Load a page into the frame store
  * 		Loading format - var stores fileID, value stores a line
+ * 		If no empty space is found, the least recently used page is kicked out
  *		The lines set for the variable store are ignored, only searching through the frame store
  *
- *  pStart: This function will store the first line of the loaded file 
- * 			in shell memory in here
- *	pOffset_End: This function wil store the last line in the offset of the
- *			final page in here
- *  page_table: This function will store pointers from the pages to the the
- * 			location of the code in shell memory here
- *  fileID: Input that need to provide when calling the function, 
- *			stores the ID of the file
+ *  pcb: Input that is required to access all relevant fields of a process
+ *  page: Input that details which page of the pcb's file that needs to be loaded
  * 
- * returns: 0
  */
-int load_file(FILE* fp, int* pEnd, int* pOffset_End, int* page_table, char* filename)
+
+void replace_page(PCB* pcb, int page)
 {
 	char *line;
     size_t i;
-	bool flag = true;
+	bool hasSpace = false;
 	i=VAR_MEM_SIZE;
-	*pOffset_End = 3;
-	int counter = 0;  // Counts number of pages
-	while(flag){
-		if (feof(fp)) {
-			break;  // Avoid incrementing counter if there's no more to read
+	for (i; i < SHELL_MEM_LENGTH; i+=3){
+		if(strcmp(shellmemory[i].var,"none") == 0){
+			hasSpace = true;
+			break;
 		}
-		for (i; i < SHELL_MEM_LENGTH; i+=3){
-			if(strcmp(shellmemory[i].var,"none") == 0){
-				page_table[counter] = i;
-				counter++;
-				break;
+	}
+	if (hasSpace) {
+		pcb->page_table[page] = (int)i;
+		copy_to_mem(pcb->fp, pcb->filename, i);
+	} else {
+		int LRU_index = VAR_MEM_SIZE; // ! Change this later to LRU
+		int upper_bound = 2;
+		printf("Page fault! Victim page contents: \n");
+		for (int i = LRU_index; i < LRU_index+3; i++) {
+			if (strcmp(shellmemory[i].var, "none") == 0) {
+				upper_bound--;  // Keep track to avoid freeing unallocated memory
+			} else {
+				printf("\nline %d: key: %s\t\tvalue: %s\n", i, shellmemory[i].var, shellmemory[i].value);
 			}
 		}
-		for (size_t j = i; j < i+3; j++){
-			if(feof(fp))
-			{
-				*pOffset_End = (int)(j-i);
-				flag = false;
-				break;
-			}else{
-				line = calloc(1, SHELL_MEM_LENGTH);
-				if (fgets(line, SHELL_MEM_LENGTH, fp) == NULL)
-				{
-					continue;
+		printf("End of victim page contents.\n");
+		mem_free_lines_between(LRU_index, LRU_index+upper_bound);
+
+		// Find the corresponding PCB and change its valid bit to false
+		PCB* prev_pcb;
+		if (strcmp(shellmemory[LRU_index].var, pcb->filename) == 0) {
+			prev_pcb = pcb;
+		} else {
+			prev_pcb = find_process(shellmemory[LRU_index].var);
+		}
+
+		// Skip the valid bit if the data is from a completed process
+		if (prev_pcb != NULL) {
+			for (int i = 0; i < prev_pcb->page_count; i++) {
+				if (prev_pcb->page_table[i] == LRU_index) {
+					prev_pcb->valid_page[i] = false;
+					break;
 				}
-				shellmemory[j].var = strdup(filename);
-				shellmemory[j].value = strndup(line, strlen(line));
-				free(line);
 			}
 		}
+		// Copy page into memory
+		pcb->page_table[page] = LRU_index;
+		copy_to_mem(pcb->fp, pcb->filename, LRU_index);
 	}
-	// Set end offset to 3 for when the process is freed
-	if (*pOffset_End == 0) {
-		*pOffset_End = 3;
-		printf("changed offset to %d\n", *pOffset_End);
-	}
-	*pEnd = counter;
-	return 0;
+	pcb->valid_page[page] = true;
 }
 
-
+// Load the first 2 pages into memory
+int load_file(PCB* pcb) {
+	replace_page(pcb, 0);
+	replace_page(pcb, 1);
+	return 0;
+}
 
 char * mem_get_value_at_line(int index){
 	if(index<0 || index > SHELL_MEM_LENGTH) return NULL; 

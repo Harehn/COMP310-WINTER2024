@@ -6,6 +6,7 @@ typedef struct QueueNode{
     PCB *pcb;
     struct QueueNode *next;
 } QueueNode;
+PCB* find_process(char* filename);
 void ready_queue_destory();
 void ready_queue_add_to_tail(QueueNode *node);
 void print_ready_queue();
