@@ -226,7 +226,7 @@ void replace_page(PCB* pcb, int page)
 			if (strcmp(shellmemory[i].var, "none") == 0) {
 				upper_bound--;  // Keep track to avoid freeing unallocated memory
 			} else {
-				printf("\nline %d: key: %s\t\tvalue: %s\n", i, shellmemory[i].var, shellmemory[i].value);
+				printf("%s", shellmemory[i].value);
 			}
 		}
 		printf("End of victim page contents.\n");
