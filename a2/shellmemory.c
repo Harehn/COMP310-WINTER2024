@@ -117,6 +117,7 @@ void printShellMemory(){
  * -----------------------
  * Copy one page of fp to a specified index of the shell memory
  *  	Loading format - var stores filename, value stores a line
+ * 		Runs through file until at specified line, then copies the page
  * 
  * filename:  Input that is required when calling, stores the unique file name
  * i:  The index in the shell memory at which the page is copied
@@ -125,6 +126,8 @@ void printShellMemory(){
  */
 // ! May have to update to search for a page from the beginning
 bool copy_to_mem(FILE* fp, char* filename, size_t i) {
+	//start from the beginning
+	//loop until page number
 	char *line;
 	for (size_t j = i; j < i+3; j++){
 		if(feof(fp))
@@ -213,7 +216,9 @@ void replace_page(PCB* pcb, int page)
 // Load the first 2 pages into memory
 int load_file(PCB* pcb) {
 	replace_page(pcb, 0);
-	replace_page(pcb, 1);
+	if (pcb->page_count > 1) {  // Stop if there is not a second page
+		replace_page(pcb, 1);
+	}
 	return 0;
 }
 
