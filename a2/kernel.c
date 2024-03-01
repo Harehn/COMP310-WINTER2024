@@ -114,13 +114,10 @@ bool execute_process(QueueNode *node, int quanta){
     
         line = mem_get_value_at_line(pcb->page_table[pcb->PC] + pcb->offset++);
 
-        // ! Order of this section was changed, make sure this is okay
         // Check that there are no more pages or the current page does not have more lines
         if(pcb->PC==pcb->page_count-1 && pcb->offset==pcb->offset_end){
             parseInput(line);
-            fclose(pcb->fp);
-            free(pcb->page_table);
-            free(pcb->valid_page);
+            terminate_process(node);
             in_background = false;
             return true;
         }

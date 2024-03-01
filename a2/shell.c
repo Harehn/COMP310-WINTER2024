@@ -17,7 +17,7 @@ int remove_store();
 int main(int argc, char *argv[]) {
     init_store();
 
-	printf("%s\n", "Shell v2.0\n");
+	printf("Shell v2.0\nFrame Store Size = %d; Variable Store Size = %d\n", FRAME_SIZE, VAR_MEM_SIZE);
 
 	char prompt = '$';  				// Shell prompt
 	char userInput[MAX_USER_INPUT];		// user's input stored here
