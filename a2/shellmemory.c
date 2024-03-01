@@ -12,6 +12,11 @@ void mem_free_lines_between(int start, int end);
 //#define FRAME_SIZE 300
 #define SHELL_MEM_LENGTH VAR_MEM_SIZE+FRAME_SIZE
 
+//Lower age means older
+//Can think of age as dob
+long age[FRAME_SIZE];
+long currentAge = 0;
+
 struct memory_struct{
 	char *var;
 	char *value;
@@ -19,6 +24,36 @@ struct memory_struct{
 
 // The shell memory is now composed of 1) the variable store 2) the frame store
 struct memory_struct shellmemory[SHELL_MEM_LENGTH];
+
+void increaseAge() {
+	currentAge += 1;
+}
+
+//Want to get oldest 
+int getOldest() {
+	long oldest = age[0];
+	int frame = 0;
+	for (int i = 0; i < FRAME_SIZE; i++) {
+		if (age[i] < oldest) {
+			oldest = age[i];
+			frame = i;
+		}
+	}
+	return frame;
+}
+
+void printAge() {
+	for (int i = 0; i < FRAME_SIZE; i++) {
+		printf("%ld ", age[i]);
+	}
+}
+
+void setAge() {
+	for (int i = 0; i < FRAME_SIZE; i++) {
+		age[i] = 0;
+	}
+}
+
 
 // Helper functions
 int match(char *model, char *var) {
@@ -51,6 +86,7 @@ void mem_init(){  // Initialize the frame and variable store
 		shellmemory[i].var = "none";
 		shellmemory[i].value = "none";
 	}
+	setAge();
 }
 
 // These functions have been modified to loop through only the variable store part of the shell memory
@@ -129,6 +165,13 @@ bool copy_to_mem(FILE* fp, char* filename, size_t i) {
 	//start from the beginning
 	//loop until page number
 	char *line;
+	increaseAge();
+	age[i - VAR_MEM_SIZE] = currentAge;
+	increaseAge();
+	age[i - VAR_MEM_SIZE + 1] = currentAge;
+	increaseAge();
+	age[i - VAR_MEM_SIZE + 2] = currentAge;
+	//printAge();
 	for (size_t j = i; j < i+3; j++){
 		if(feof(fp))
 		{
@@ -176,7 +219,8 @@ void replace_page(PCB* pcb, int page)
 		pcb->page_table[page] = (int)i;
 		copy_to_mem(pcb->fp, pcb->filename, i);
 	} else {
-		int LRU_index = VAR_MEM_SIZE; // ! Change this later to LRU
+		//int LRU_index = VAR_MEM_SIZE; // ! Change this later to LRU
+		int LRU_index = getOldest();
 		int upper_bound = 2;
 		printf("Page fault! Victim page contents: \n");
 		for (int i = LRU_index; i < LRU_index+3; i++) {
