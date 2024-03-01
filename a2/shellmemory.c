@@ -273,7 +273,17 @@ int load_file(PCB* pcb) {
 }
 
 char * mem_get_value_at_line(int index){
-	if(index<0 || index > SHELL_MEM_LENGTH) return NULL; 
+	if(index<0 || index > SHELL_MEM_LENGTH) return NULL;
+	if (index >= VAR_MEM_SIZE || index < SHELL_MEM_LENGTH) {
+		int i = index - VAR_MEM_SIZE;
+		i -= (i % 3);
+		increaseAge();
+		age[i] = currentAge;
+		increaseAge();
+		age[i + 1] = currentAge;
+		increaseAge();
+		age[i + 2] = currentAge;
+	}
 	return shellmemory[index].value;
 }
 
