@@ -76,21 +76,13 @@ void print_ready_queue(){
     }
 }
 
-// UPDATE: This function is not used in the assignment due to page replacement
+// Remove all code that frees shellmemory due to page replacement policy
 void terminate_process(QueueNode *node){
-    //node should not be in the ready queue
-    PCB* pcb = node->pcb;
-    int* iter = pcb->page_table;
-    int* table_end = iter + pcb->page_count - 1;
-    // Iterate through page table to free memory
-    while (iter < table_end) {
-        int i = *iter;
-        mem_free_lines_between(i, i+2);
-        iter++;
-    }
-    // Only free the lines in the last page that contain script
-    int i = *iter;
-    mem_free_lines_between(i, i+pcb->offset_end-1);
+    fclose(node->pcb->fp);
+    free(node->pcb->page_table);
+    free(node->pcb->valid_page);
+    free(node->pcb->filename);
+    free(node->pcb);
     free(node);
 }
 

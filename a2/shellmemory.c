@@ -22,18 +22,18 @@ struct memory_struct{
 	char *value;
 };
 
-// The shell memory is now composed of 1) the variable store 2) the frame store
+// The shell memory is composed of 1) the variable store 2) the frame store
 struct memory_struct shellmemory[SHELL_MEM_LENGTH];
 
 void increaseAge() {
 	currentAge += 1;
 }
 
-//Want to get oldest 
+// Search through frame store to find page with the lowest age
 int getOldest() {
 	long oldest = age[0];
 	int frame = 0;
-	for (int i = 0; i < FRAME_SIZE; i++) {
+	for (int i = 0; i < FRAME_SIZE; i+=3) {
 		if (age[i] < oldest) {
 			oldest = age[i];
 			frame = i;
@@ -160,28 +160,21 @@ void printShellMemory(){
  * 
  * returns:true if there is more to read in the file, false otherwise 
  */
-// ! May have to update to search for a page from the beginning
 bool copy_to_mem(int index, FILE* fp, char* filename, size_t i) {
-	//start from the beginning
-	//loop until page number
+	//start from the beginning and loop until page number
 	char* line;
 	fseek(fp, 0, SEEK_SET);
-	for (int line_num; line_num < index; line_num++) {
+	for (int line_num = 0; line_num < index; line_num++) {
 		line = calloc(1, SHELL_MEM_LENGTH);
 		fgets(line, SHELL_MEM_LENGTH, fp);
+		free(line);
 	}
+
+	// Increment the age of the corresponding page and write into memory
 	increaseAge();
-	age[i - VAR_MEM_SIZE] = currentAge;
-	increaseAge();
-	age[i - VAR_MEM_SIZE + 1] = currentAge;
-	increaseAge();
-	age[i - VAR_MEM_SIZE + 2] = currentAge;
-	//printAge();
 	for (size_t j = i; j < i+3; j++){
-		if(feof(fp))
-		{
-			return false;
-		}else{
+		age[j-VAR_MEM_SIZE] = currentAge;
+		if(!feof(fp)) {	
 			line = calloc(1, SHELL_MEM_LENGTH);
 			if (fgets(line, SHELL_MEM_LENGTH, fp) == NULL)
 			{
@@ -222,9 +215,9 @@ void replace_page(PCB* pcb, int page)
 	}
 	if (hasSpace) {
 		pcb->page_table[page] = (int)i;
-		copy_to_mem(pcb->PC,pcb->fp, pcb->filename, i);
+		// Use PC*3 to find the first line in the page
+		copy_to_mem((pcb->PC)*3,pcb->fp, pcb->filename, i);
 	} else {
-		//int LRU_index = VAR_MEM_SIZE; // ! Change this later to LRU
 		//printAge();
 		int LRU_index = getOldest() + VAR_MEM_SIZE;
 		int upper_bound = 2;
@@ -258,7 +251,7 @@ void replace_page(PCB* pcb, int page)
 		}
 		// Copy page into memory
 		pcb->page_table[page] = LRU_index;
-		copy_to_mem(pcb->PC, pcb->fp, pcb->filename, LRU_index);
+		copy_to_mem((pcb->PC)*3, pcb->fp, pcb->filename, LRU_index);
 	}
 	pcb->valid_page[page] = true;
 }
@@ -267,7 +260,9 @@ void replace_page(PCB* pcb, int page)
 int load_file(PCB* pcb) {
 	replace_page(pcb, 0);
 	if (pcb->page_count > 1) {  // Stop if there is not a second page
+		pcb->PC = 1;  // To access the right lines when copy_to_mem is called
 		replace_page(pcb, 1);
+		pcb->PC = 0;
 	}
 	return 0;
 }
