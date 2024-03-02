@@ -4,11 +4,17 @@
 /*
  * Struct:  PCB 
  * --------------------
+ * priority: priority flag
  * pid: process(task) id
  * PC: program counter, stores the index of line that the task is executing
- * start: the first line in shell memory that belongs to this task
- * end: the last line in shell memory that belongs to this task
+ * page_count: 
+ * offset_end:
+ * page_table: array to hold the indices of the pages
+ * offset:s
+ * valid_page:
  * job_length_score: for EXEC AGING use only, stores the job length score
+ * filename: name of the file from which commands are read from
+ * fp: Filestream object to read from
  */
 typedef struct
 {
@@ -25,8 +31,11 @@ typedef struct
     FILE* fp;
 }PCB;
 
+//Helper function to get the PID
 int generatePID();
+//Function to get the PID
 int getPID();
+// Create PCB
 PCB * makePCB(int page_count, int offset_end, int* table, bool* valid, char* name, FILE* fp);
 
 #endif

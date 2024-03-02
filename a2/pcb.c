@@ -7,10 +7,12 @@
 
 int pid_counter = 1;
 
+//Increases the PID and returns it
 int generatePID(){
     return pid_counter++;
 }
 
+//Allows access to the PID
 int getPID() {
     return pid_counter;
 }
@@ -25,7 +27,6 @@ PCB* makePCB(int page_count, int offset_end, int* table, bool* valid, char* name
     newPCB->page_table = table; 
     newPCB->offset = 0;
     newPCB->valid_page = valid;
-    // newPCB->job_length_score = 1+end-start;
     newPCB->priority = false;
     newPCB->filename = (char*)malloc(strlen(name)+1);
     strcpy(newPCB->filename, name);
