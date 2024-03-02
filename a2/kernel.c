@@ -25,6 +25,7 @@ int process_initialize(char *filename){
 		return FILE_DOES_NOT_EXIST;
     }
 
+    // We want to get the PID of the next PCB
     char pid[3];
     sprintf(pid, "%d", getPID());
 
@@ -33,7 +34,7 @@ int process_initialize(char *filename){
     strcpy(newfile, "./backing_store/");
     strcat(newfile, filename);
     strcat(newfile, pid);
-    cp = fopen(newfile, "w");
+    cp = fopen(newfile, "w"); 
     fp = fopen(filename, "rt");
     char c;
     c = fgetc(fp);
@@ -79,27 +80,6 @@ int process_initialize(char *filename){
     fclose(fp);
     return 0;
 }
-
-// int shell_process_initialize(){
-//     //Note that "You can assume that the # option will only be used in batch mode."
-//     //So we know that the input is a file, we can directly load the file into ram
-//     int* start = (int*)malloc(sizeof(int));
-//     int* end = (int*)malloc(sizeof(int));
-//     int error_code = 0;
-//     error_code = load_file(stdin, start, end, "_SHELL");
-//     if(error_code != 0){
-//         return error_code;
-//     }
-//     PCB* newPCB = makePCB(*start,*end);
-//     newPCB->priority = true;
-//     QueueNode *node = malloc(sizeof(QueueNode));
-//     node->pcb = newPCB;
-
-//     ready_queue_add_to_head(node);
-
-//     freopen("/dev/tty", "r", stdin);
-//     return 0;
-// }
 
 bool execute_process(QueueNode *node, int quanta){
     char *line = NULL;
