@@ -135,19 +135,6 @@ char *mem_get_value(char *var_in) {
 }
 
 
-void printShellMemory(){
-	int count_empty = 0;
-	for (int i = 0; i < SHELL_MEM_LENGTH; i++){
-		if(strcmp(shellmemory[i].var,"none") == 0){
-			count_empty++;
-		}
-		else{
-			printf("\nline %d: key: %s\t\tvalue: %s\n", i, shellmemory[i].var, shellmemory[i].value);
-		}
-    }
-	printf("\n\t%d lines in total, %d lines in use, %d lines free\n\n", SHELL_MEM_LENGTH, SHELL_MEM_LENGTH-count_empty, count_empty);
-}
-
 /*
  * Function:  copy_to_mem
  * -----------------------
