@@ -15,7 +15,7 @@ int init_store();
 int remove_store();
 
 int main(int argc, char *argv[]) {
-    init_store();
+    init_store(); //Initialise the store 
 
 	printf("Shell v2.0\nFrame Store Size = %d; Variable Store Size = %d\n", FRAME_SIZE, VAR_MEM_SIZE);
 
@@ -94,6 +94,7 @@ int init_store() {
     return 0;
 }
 
+// Removes the backing store and all its contents
 int remove_store() {
     system("rm -f backing_store/*");
     rmdir("backing_store");
