@@ -13,7 +13,6 @@ void print_ready_queue();
 void terminate_process(QueueNode *node);
 bool is_ready_empty();
 QueueNode *ready_queue_pop_shortest_job();
-void ready_queue_head_to_tail();
 void ready_queue_add_to_head(QueueNode *node);
 QueueNode *ready_queue_pop_head();
 void ready_queue_decrement_job_length_score();
