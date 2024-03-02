@@ -141,11 +141,6 @@ int interpreter(char* command_args[], int args_size){
 		if (args_size > 1) return handle_error(TOO_MANY_TOKENS);
 		return resetmem();
 	}
-	else if (strcmp(command_args[0], "printmem")==0)
-	{ // * Testing purposes only, delete later
-		printShellMemory();
-		return 0;
-	}
 	
 	return handle_error(BAD_COMMAND);
 }
