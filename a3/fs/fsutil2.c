@@ -15,12 +15,23 @@
 #include <string.h>
 
 int copy_in(char *fname) {
-  // TODO
+
   return 0;
 }
 
 int copy_out(char *fname) {
-  // TODO
+    int size = fsutil_size(fname);
+    char* buffer = malloc((size + 1) * sizeof(char));
+    memset(buffer, 0, size + 1);
+    fsutil_read(fname, buffer, size);
+    //printf(buffer);
+    FILE* file = fopen(fname, "w");
+    if (file == NULL) {
+        printf("file does not exist");
+        return -1;
+    }
+    fputs(buffer, file);
+    fclose(file);
   return 0;
 }
 
