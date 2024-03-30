@@ -1,3 +1,6 @@
+// Danlin Luo 261040021
+// Nitin Kaundun 260786113
+
 #include "fsutil2.h"
 #include "bitmap.h"
 #include "cache.h"
@@ -21,6 +24,13 @@ int copy_in(char *fname) {
 
 int copy_out(char *fname) {
     int size = fsutil_size(fname);
+    if (size == -1) {
+      return 1;  // File does not exist error
+    }
+    struct file *file_s = get_file_by_fname(fname);
+    offset_t offset = file_s->pos;
+    file_seek(file_s, 0);
+    
     char* buffer = malloc((size + 1) * sizeof(char));
     memset(buffer, 0, size + 1);
     fsutil_read(fname, buffer, size);
@@ -28,10 +38,12 @@ int copy_out(char *fname) {
     FILE* file = fopen(fname, "w");
     if (file == NULL) {
         printf("file does not exist");
-        return -1;
+        return 12;  // File write error
     }
     fputs(buffer, file);
     fclose(file);
+
+    file_seek(file_s, offset);
   return 0;
 }
 
