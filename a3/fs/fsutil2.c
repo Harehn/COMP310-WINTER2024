@@ -144,7 +144,7 @@ void fragmentation_degree() {
             if (all_sectors[index] == '\0') {
                 break;
             }
-            if (all_sectors[index] != previous + 1) {
+            if (all_sectors[index] - previous > 3) {
                 fragmented += 1;
                 break;
             }
