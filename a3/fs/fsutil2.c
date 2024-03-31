@@ -79,7 +79,42 @@ int copy_out(char *fname) {
 }
 
 void find_file(char *pattern) {
-  // TODO
+  struct dir *dir;
+  char name[NAME_MAX + 1];
+  dir = dir_open_root();
+  if (dir == NULL) {
+    return;
+  }
+
+  // Loop through all files in root directory, checking for pattern in file contents
+  while (dir_readdir(dir, name)) {
+    struct file *file_s = get_file_by_fname(name);
+    bool opened = false;
+    // filesys_open will not output NULL because program loops through existing files
+    if (file_s == NULL) {
+      file_s = filesys_open(name);  
+      opened = true;
+      add_to_file_table(file_s, name);
+    }
+
+    int size = file_length(file_s);
+    offset_t offset = file_tell(file_s);
+    file_seek(file_s, 0);
+
+    char* buffer = calloc(size + 1, sizeof(char));
+    file_read(file_s, buffer, size);
+    char* ptr = strstr(buffer, pattern);
+    if (ptr != NULL) {
+      printf("%s\n", name);
+    }
+
+    file_seek(file_s, offset);
+    free(buffer);
+    if (opened) {
+      remove_from_file_table(name);
+    }
+  }
+  dir_close(dir);
   return;
 }
 
