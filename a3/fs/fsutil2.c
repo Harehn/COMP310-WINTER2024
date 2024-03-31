@@ -148,6 +148,7 @@ void fragmentation_degree() {
                 fragmented += 1;
                 break;
             }
+            previous = all_sectors[index];
         }
         if (index == 1) {
             //printf("Not Fragmented\n");
