@@ -113,7 +113,54 @@ void find_file(char *pattern) {
 }
 
 void fragmentation_degree() {
-  // TODO
+    struct dir* dir;
+    char name[NAME_MAX + 1];
+    dir = dir_open_root();
+    if (dir == NULL)
+        return;
+    int fragmentable = 0;
+    int fragmented = 0;
+    while (dir_readdir(dir, name)) {
+        int size = fsutil_size(name);
+        if (size == -1) {
+            return;  // File does not exist error
+        }
+        struct file* file_s = get_file_by_fname(name);
+        offset_t offset = file_s->pos;
+        file_seek(file_s, 0);
+
+        printf(name);
+        printf("\nMain Sector: %d\n",file_s->inode->sector);
+        struct inode *main = file_s->inode;
+        block_sector_t* all_sectors = get_inode_data_sectors(main);
+        //int length = sizeof(all_sectors) / sizeof(file_s->inode->sector);
+        //printf("Number of sectors: %d", length);
+        //printf("FIRST: %d ",all_sectors[1]);
+        int index = 0;
+        block_sector_t previous = all_sectors[index];
+        while (index < 100) {
+            //printf("| %d |", all_sectors[index]);
+            index++;
+            if (all_sectors[index] == '\0') {
+                break;
+            }
+            if (all_sectors[index] != previous + 1) {
+                fragmented += 1;
+            }
+        }
+        if (index == 1) {
+            //printf("Not Fragmented\n");
+        }
+        else {
+            //printf("Fragmented\n");
+            fragmentable += 1;
+        }
+        file_seek(file_s, offset);
+    }
+    printf("Fragmentable: %d\n", fragmentable);
+    printf("Fragmented:%d\n", fragmented);
+    dir_close(dir);
+    return;
 }
 
 int defragment() {
