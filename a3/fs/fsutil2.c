@@ -139,7 +139,7 @@ void fragmentation_degree() {
         int index = 0;
         block_sector_t previous = all_sectors[index];
         while (index < 100) {
-            //printf("| %d |", all_sectors[index]);
+            printf("| %d |", all_sectors[index]);
             index++;
             if (all_sectors[index] == '\0') {
                 break;
