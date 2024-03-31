@@ -79,7 +79,56 @@ int copy_out(char *fname) {
 }
 
 void find_file(char *pattern) {
-  // TODO
+  int length = 0;
+  while (pattern[length] != '\0') {
+      length += 1;
+  }
+  //printf("SIZE: %d", length);
+  struct dir* dir;
+  char name[NAME_MAX + 1];
+  dir = dir_open_root();
+  if (dir == NULL)
+      return;
+  while (dir_readdir(dir, name)) {
+      //printf("%s\n", name);
+      int size = fsutil_size(name);
+      if (size == -1) {
+          return;  // File does not exist error
+      }
+      struct file* file_s = get_file_by_fname(name);
+      offset_t offset = file_s->pos;
+      file_seek(file_s, 0);
+
+      char* buffer = malloc((size + 1) * sizeof(char));
+      memset(buffer, 0, size + 1);
+      fsutil_read(name, buffer, size);
+      int pattern_index = 0;
+      for (int i = 0; i < size; i++) {
+          char currentchar = buffer[i];
+          if (currentchar == pattern[pattern_index]) {
+              if (pattern_index + 1 == length) {
+                  pattern_index = 0;
+                  //printf("matched");
+                  printf(name);
+                  printf("\n");
+                  break;
+              }
+              else {
+                  pattern_index += 1;
+              }
+          }
+          else {
+              pattern_index = 0;
+          }
+      }
+      
+      //printf(buffer);
+      //printf("\n");
+
+      file_seek(file_s, offset);
+  }
+      
+  dir_close(dir);
   return;
 }
 
