@@ -18,7 +18,38 @@
 #include <string.h>
 
 int copy_in(char *fname) {
+  // Get the size
+  FILE* file = fopen(fname, "r");
+  if (file == NULL) {
+      printf("file does not exist");
+      return -1;
+  }
+  fseek(file, 0, SEEK_END);
+  int size = ftell(file);
+  fseek(file, 0, SEEK_SET);
 
+  fsutil_create(fname, size);
+
+  char* buffer = malloc(size + 1 * sizeof(char));
+  memset(buffer, 0, size);
+  fgets(buffer, size + 1, file);
+  fsutil_write(fname, buffer, size + 1);
+  free(buffer);
+
+  struct file* file_s = get_file_by_fname(fname);
+  file_seek(file_s, 0);
+
+
+  //char* buffer = malloc(11 * sizeof(char));
+  //memset(buffer, 0, 10);
+  //while (fgets(buffer, 10, file)) {
+  //    fsutil_write(fname, buffer, 10);
+  //    memset(buffer, 0, 10);
+  //}
+  //memset(buffer, 0, 10);
+
+
+  fclose(file);
   return 0;
 }
 
