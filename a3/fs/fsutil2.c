@@ -32,7 +32,7 @@ int copy_in(char *fname) {
 
   char* buffer = malloc(size + 1 * sizeof(char));
   memset(buffer, 0, size);
-  fgets(buffer, size + 1, file);
+  fread(buffer, 1, size, file);
   fsutil_write(fname, buffer, size + 1);
   free(buffer);
 
