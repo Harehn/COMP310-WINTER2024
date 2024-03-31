@@ -145,12 +145,11 @@ void fragmentation_degree() {
                 break;
             }
             if (all_sectors[index] - previous > 3) {
-                printf("| %d || %d |", all_sectors[index], previous);
+                printf("| %d || %d |\n", all_sectors[index], previous);
                 fragmented += 1;
                 break;
             }
             previous = all_sectors[index];
-            printf("\n");
         }
         if (index == 2) {
             //printf("Not Fragmented\n");
