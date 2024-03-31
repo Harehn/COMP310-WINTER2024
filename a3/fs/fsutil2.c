@@ -22,7 +22,7 @@ int copy_in(char *fname) {
   FILE* file = fopen(fname, "r");
   if (file == NULL) {
       printf("file does not exist");
-      return -1;
+      return 1;  // File does not exist error
   }
   fseek(file, 0, SEEK_END);
   int size = ftell(file);
