@@ -13,28 +13,41 @@
 #include "inode.h"
 #include "off_t.h"
 #include "partition.h"
+#include "round.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+int copyable_size_of_file(int size);
 
 int copy_in(char *fname) {
   // Get the size
   FILE* file = fopen(fname, "r");
   if (file == NULL) {
-      printf("file does not exist");
       return 1;  // File does not exist error
   }
   fseek(file, 0, SEEK_END);
-  int size = ftell(file);
+  long int size = ftell(file);
   fseek(file, 0, SEEK_SET);
 
-  fsutil_create(fname, size);
+  // Allocates an extra block if null terminating character causes overflow
+  int copy_size = size % BLOCK_SECTOR_SIZE == 0 ? 
+      copyable_size_of_file(size+1) : copyable_size_of_file(size);
+  if (copy_size <= 0) {
+    return 2;  // No memory space error
+  }
 
-  char* buffer = malloc(size + 1 * sizeof(char));
-  memset(buffer, 0, size);
-  fread(buffer, 1, size, file);
-  fsutil_write(fname, buffer, size + 1);
+  fsutil_create(fname, copy_size);
+
+  char* buffer = malloc(copy_size + 1 * sizeof(char));
+  memset(buffer, 0, copy_size);
+  fread(buffer, sizeof(char), copy_size, file);
+  fsutil_write(fname, buffer, copy_size + 1);
   free(buffer);
+
+  if (size != copy_size) {
+    printf("Warning: could only write %d out of %ld bytes (reached end of file\n", copy_size, size);
+  }
 
   struct file* file_s = get_file_by_fname(fname);
   file_seek(file_s, 0);
@@ -73,7 +86,8 @@ int copy_out(char *fname) {
     }
     fputs(buffer, file);
     fclose(file);
-
+    
+    free(buffer);
     file_seek(file_s, offset);
   return 0;
 }
@@ -182,4 +196,63 @@ void recover(int flag) {
 
     // TODO
   }
+}
+
+
+/**
+ * Returns the size of the file that can be written into the drive
+ * Output is limited based on the freespace in drive
+ * Subtract 1 from the upper limit of available blocks to fit the null terminating character
+*/
+int copyable_size_of_file(int size) {
+  int sectors_needed = bytes_to_sectors(size);
+  int free_sectors = num_free_sectors();
+  int total_indirect = DIRECT_BLOCKS_COUNT + INDIRECT_BLOCKS_PER_SECTOR + 2;
+  int total_double_indirect = total_indirect + 1 + INDIRECT_BLOCKS_PER_SECTOR +
+          (INDIRECT_BLOCKS_PER_SECTOR * INDIRECT_BLOCKS_PER_SECTOR);
+
+  // Direct blocks + inode: 1 + (0-123) blocks
+  if (free_sectors <= DIRECT_BLOCKS_COUNT + 1) {
+    if (sectors_needed <= free_sectors-1) {
+      return size;
+    }
+    return BLOCK_SECTOR_SIZE * (free_sectors-1) - 1;
+  }
+  // 1 indirect block: 2 + (123-251) blocks
+  else if (free_sectors <= DIRECT_BLOCKS_COUNT + INDIRECT_BLOCKS_PER_SECTOR + 2) {
+    if (sectors_needed <= free_sectors-2) {
+      return size;
+    }
+    return  BLOCK_SECTOR_SIZE * (free_sectors-2) - 1;
+  }
+  // 1 double indirect block: > 2 + 251 blocks
+  else {
+    // check for max capacity of inode
+    if (free_sectors >= total_double_indirect) {
+      if (sectors_needed <= total_double_indirect-131) {
+        return size;
+      }
+      return BLOCK_SECTOR_SIZE * (total_double_indirect - 131) - 1;
+    }
+
+    // metadata = 1 inode + 1 indirect + 1 double indirect + x indirect from double indirect
+    int metadata_blocks = 3 + DIV_ROUND_UP((free_sectors-(total_indirect+1)),129);
+    printf("%d metadata blocks\n", metadata_blocks);
+    if (sectors_needed <= free_sectors-metadata_blocks) {
+      return size;
+    }
+    return BLOCK_SECTOR_SIZE * (free_sectors-metadata_blocks) - 1;
+  }
+  /** calculations for # of indirect blocks in double indirect
+   *    1 inode
+   *    123 direct
+   *    1 indirect
+   *    128 pointers
+   *    1 double indirect
+   *    x indicrect             (x can be a max of 128)
+   *    x * 128 double indirect (may be less than 128 given space)
+   *    total: 254 + 129x
+   *  round up x, last indirect block will point to less than 128 sectors
+  */
+  return 0;  // error?
 }

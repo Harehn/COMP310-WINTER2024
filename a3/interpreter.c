@@ -1,3 +1,6 @@
+// Danlin Luo 261040021
+// Nitin Kaundun 260786113
+
 #include <ctype.h>
 #include <dirent.h>
 #include <stdio.h>
@@ -286,7 +289,7 @@ int interpreter(char *command_args[], int args_size, char *cwd) {
 
     int status = copy_in(command_args[1]);
     if (status != 0)
-      return handle_error(status);
+      return handle_error(status-1);
     return 0;
   } else if (strcmp(command_args[0], "copy_out") == 0) {
     if (args_size != 2)
@@ -294,7 +297,7 @@ int interpreter(char *command_args[], int args_size, char *cwd) {
 
     int status = copy_out(command_args[1]);
     if (status != 0)
-      return handle_error(status);
+      return handle_error(status-1);
     return 0;
   } else if (strcmp(command_args[0], "size") == 0) { // rm
     if (args_size != 2)
