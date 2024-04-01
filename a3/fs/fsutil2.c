@@ -147,10 +147,6 @@ void fragmentation_degree() {
         //printf("\nMain Sector: %d\n",file_s->inode->sector);
         struct inode *main = file_s->inode;
         block_sector_t* all_sectors = get_inode_data_sectors(main);
-        //int length = sizeof(all_sectors) / sizeof(file_s->inode->sector);
-        //printf("Number of sectors: %d", length);
-        //printf("FIRST: %d ",all_sectors[1]);
-
         int file_size = fsutil_size(name);
         int inode_number = file_size / 512;
         if (file_size % 512) {
@@ -160,13 +156,6 @@ void fragmentation_degree() {
         int index = 0;
         block_sector_t previous = all_sectors[index];
         for (index = 1; index < inode_number; index++) {
-            //if (index != 1) printf("| %d |", all_sectors[index]);
-            /*
-            index++;
-            if (all_sectors[index] == '\0') {
-                break;
-            }
-            */
             if (all_sectors[index] - previous > 3) {
                 //printf("| %d || %d |\n", all_sectors[index], previous);
                 fragmented += 1;
@@ -175,10 +164,8 @@ void fragmentation_degree() {
             previous = all_sectors[index];
         }
         if (index == 2) {
-            //printf("Not Fragmented\n");
         }
         else {
-            //printf("Fragmented\n");
             fragmentable += 1;
         }
         file_seek(file_s, offset);
