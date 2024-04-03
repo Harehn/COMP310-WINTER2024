@@ -185,7 +185,6 @@ void fragmentation_degree() {
  * The disk is cleared and then the files are sequentially rewritten into the disk
 */
 int defragment() {
-  printf("\n\n");
   struct dir* dir;
   char name[NAME_MAX + 1];
   dir = dir_open_root();
@@ -200,7 +199,7 @@ int defragment() {
     if (size == -1) {
         return 1;  // File does not exist error
     }
-    fsutil_cat(name);
+
     struct file* file_s = get_file_by_fname(name);
     offset_t offset = file_s->pos;
     file_seek(file_s, 0);
@@ -210,9 +209,10 @@ int defragment() {
     if (fsutil_read(name, buffer, size) == -1)
       return 13;  // File read error
 
-    // Keep track of the name
+    // Copy name to put into a file_elem
     char* name_cpy = calloc(sizeof(char), strlen(name)+1);
-    memcpy(name_cpy, name, strlen(name));
+    strcpy(name_cpy, name);
+    name_cpy[strlen(name)] = '\0';
 
     struct file_elem* f = (struct file_elem*) malloc(sizeof(struct file_elem));
     f->elem = (struct list_elem) {NULL, NULL};
@@ -222,26 +222,27 @@ int defragment() {
     list_push_back(&file_list, &f->elem);
 
     file_seek(file_s, offset);
-    inode_clear(file_s->inode);
-    //TODO update issues that may happen
   }  
   dir_close(dir);
 
-  // Iterate over llist and rewrite file contents
+  // Iterate over llist and clear the disk
   struct list_elem* e;
+  for (e = list_begin(&file_list); e != list_end(&file_list); e = list_next(e)) {
+    struct file_elem *f = list_entry (e, struct file_elem, elem);
+    remove_from_file_table(f->fname);
+    filesys_remove(f->fname);
+  }
+
+  // Iterate over llist and write files back into disk
   while (!list_empty(&file_list)) {
     e = list_pop_front(&file_list);
     struct file_elem *f = list_entry (e, struct file_elem, elem);
-    struct file* file_s = get_file_by_fname(f->fname);
+    fsutil_create(f->fname, f->size);
 
-    // Allocate contiguous space in newly emptied disk
-    inode_realloc(file_s->inode, f->size);
-
-    offset_t offset = file_s->pos;
-    file_seek(file_s, 0);
-    file_write(file_s, f->contents, f->size);
-    file_seek(file_s, offset);
+    fsutil_write(f->fname, f->contents, f->size);
+    fsutil_seek(f->fname, 0);
     
+    // Free the node contents
     free(f->fname);
     free(f->contents);
     free(f);

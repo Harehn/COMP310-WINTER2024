@@ -1,6 +1,3 @@
-// Danlin Luo 261040021
-// Nitin Kaundun 260786113
-
 #include "inode.h"
 #include "cache.h"
 #include "debug.h"
@@ -579,25 +576,4 @@ block_sector_t *get_inode_data_sectors(struct inode *inode) {
 
   ASSERT(num_sectors == 0);
   return sectors;
-}
-
-// Removes the inode
-bool inode_clear (struct inode *inode) {
-  free_map_release(inode->sector, 1);
-  inode_deallocate(inode);
-  for (size_t i = 0; i < DIRECT_BLOCKS_COUNT; ++i)
-    inode->data.direct_blocks[i] = 0;
-  inode->data.indirect_block = 0;
-  inode->data.doubly_indirect_block = 0;
-  return true;
-}
-
-// Reallocates space in disk for inode
-bool inode_realloc (struct inode *inode, offset_t size) {
-  block_sector_t inode_sector = 0;
-  free_map_allocate(1, &inode_sector);
-  inode->sector = inode_sector;
-  inode_allocate(&inode->data);
-  buffer_cache_write(inode_get_inumber(inode), &inode->data);
-  return true;
 }
