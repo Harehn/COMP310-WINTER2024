@@ -134,7 +134,6 @@ void find_file(char *pattern) {
 }
 
 void fragmentation_degree() {
-    printf("\n");
     struct dir* dir;
     char name[NAME_MAX + 1];
     dir = dir_open_root();
@@ -151,7 +150,6 @@ void fragmentation_degree() {
         offset_t offset = file_s->pos;
         file_seek(file_s, 0);
 
-        printf("%s %d\n", name, size);
         //printf("\nMain Sector: %d\n",file_s->inode->sector);
         struct inode *main = file_s->inode;
         block_sector_t* all_sectors = get_inode_data_sectors(main);
@@ -202,7 +200,7 @@ int defragment() {
     if (size == -1) {
         return 1;  // File does not exist error
     }
-    printf("%s %d\n", name, size);
+    fsutil_cat(name);
     struct file* file_s = get_file_by_fname(name);
     offset_t offset = file_s->pos;
     file_seek(file_s, 0);
