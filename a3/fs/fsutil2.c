@@ -206,7 +206,8 @@ int defragment() {
 
     // Copy contents into a list node
     char* buffer = calloc(sizeof(char), size+1);
-    fsutil_read(name, buffer, size);
+    if (fsutil_read(name, buffer, size) == -1)
+      return 13;  // File read error
 
     // Keep track of the name
     char* name_cpy = calloc(sizeof(char), strlen(name)+1);
@@ -224,9 +225,6 @@ int defragment() {
     //TODO update issues that may happen
   }  
   dir_close(dir);
-
-  // Clear buffer to avoid writing in the wrong places
-  buffer_cache_init();
 
   // Iterate over llist and rewrite file contents
   struct list_elem* e;
