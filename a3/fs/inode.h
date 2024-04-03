@@ -1,3 +1,6 @@
+// Danlin Luo 261040021
+// Nitin Kaundun 260786113
+
 #ifndef FILESYS_INODE_H
 #define FILESYS_INODE_H
 
@@ -53,6 +56,8 @@ offset_t inode_length(const struct inode *);
 bool inode_is_directory(const struct inode *);
 bool inode_is_removed(const struct inode *);
 size_t bytes_to_sectors(offset_t size);
+bool inode_clear(struct inode *);
+bool inode_realloc(struct inode *, offset_t size);
 
 block_sector_t *get_inode_data_sectors(struct inode *);
 

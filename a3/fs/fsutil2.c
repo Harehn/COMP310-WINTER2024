@@ -18,6 +18,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct file_elem {
+  struct list_elem elem;
+  char* fname;
+  char* contents;
+  int size;
+};
+
 int copyable_size_of_file(int size);
 
 int copy_in(char *fname) {
@@ -180,8 +187,72 @@ void fragmentation_degree() {
     return;
 }
 
+/**
+ * Defragments by iterating through files and writing contents into memory
+ * The disk is cleared and then the files are sequentially rewritten into the disk
+*/
 int defragment() {
-  // TODO
+  struct dir* dir;
+  char name[NAME_MAX + 1];
+  dir = dir_open_root();
+  if (dir == NULL)
+    return 11;  // Filesystem error
+
+  struct list file_list = LIST_INITIALIZER (file_list);
+
+  // Store files in memory through a linked list
+  while (dir_readdir(dir, name)) {
+    int size = fsutil_size(name);
+    if (size == -1) {
+        return 1;  // File does not exist error
+    }
+    struct file* file_s = get_file_by_fname(name);
+    offset_t offset = file_s->pos;
+    file_seek(file_s, 0);
+
+    // Copy contents into a list node
+    char* buffer = calloc(sizeof(char), size+1);
+    fsutil_read(name, buffer, size);
+
+    // Keep track of the name
+    char* name_cpy = calloc(sizeof(char), strlen(name)+1);
+    memcpy(name_cpy, name, strlen(name));
+
+    struct file_elem* f = (struct file_elem*) malloc(sizeof(struct file_elem));
+    f->elem = (struct list_elem) {NULL, NULL};
+    f->contents = buffer;
+    f->fname = name_cpy;
+    f->size = size;
+    list_push_back(&file_list, &f->elem);
+
+    file_seek(file_s, offset);
+    inode_clear(file_s->inode);
+    //TODO update issues that may happen
+  }  
+  dir_close(dir);
+
+  // Clear buffer to avoid writing in the wrong places
+  buffer_cache_init();
+
+  // Iterate over llist and rewrite file contents
+  struct list_elem* e;
+  while (!list_empty(&file_list)) {
+    e = list_pop_front(&file_list);
+    struct file_elem *f = list_entry (e, struct file_elem, elem);
+    struct file* file_s = get_file_by_fname(f->fname);
+
+    // Allocate contiguous space in newly emptied disk
+    inode_realloc(file_s->inode, f->size);
+
+    offset_t offset = file_s->pos;
+    file_seek(file_s, 0);
+    file_write(file_s, f->contents, f->size);
+    file_seek(file_s, offset);
+    
+    free(f->fname);
+    free(f->contents);
+    free(f);
+  }
   return 0;
 }
 
@@ -237,7 +308,6 @@ int copyable_size_of_file(int size) {
 
     // metadata = 1 inode + 1 indirect + 1 double indirect + x indirect from double indirect
     int metadata_blocks = 3 + DIV_ROUND_UP((free_sectors-(total_indirect+1)),129);
-    printf("%d metadata blocks\n", metadata_blocks);
     if (sectors_needed <= free_sectors-metadata_blocks) {
       return size;
     }
