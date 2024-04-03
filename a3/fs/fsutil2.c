@@ -155,10 +155,7 @@ void fragmentation_degree() {
         struct inode *main = file_s->inode;
         block_sector_t* all_sectors = get_inode_data_sectors(main);
         int file_size = fsutil_size(name);
-        int inode_number = file_size / 512;
-        if (file_size % 512) {
-            inode_number += 1;
-        }
+        int inode_number = bytes_to_sectors(file_size);
 
         int index = 0;
         block_sector_t previous = all_sectors[index];
@@ -170,11 +167,11 @@ void fragmentation_degree() {
             }
             previous = all_sectors[index];
         }
-        if (index == 2) {
-        }
-        else {
+        if (inode_number > 1) {
             fragmentable += 1;
         }
+        
+        free(all_sectors);
         file_seek(file_s, offset);
     }
     printf("Num fragmentable files: %d\n", fragmentable);
