@@ -252,7 +252,29 @@ int defragment() {
 
 void recover(int flag) {
   if (flag == 0) { // recover deleted inodes
+      int count = bitmap_size(free_map);
+      for (int i = 0; i < count; i++) {
+          int free = bitmap_test(free_map, i);
+          struct inode* curr_inode;
+          if (!free) {
+              //printf("\nSector %d)", i);
+              curr_inode = inode_open(i);
+              int l = inode_length(curr_inode);
+              if (l > 0) {
+                  char filename[30];
+                  sprintf(filename, "recovered0-%d", i);
+                  struct dir* root = dir_open_root();
+                  bool is_dir = false;
+                  dir_add(root, filename, i, is_dir);
+                  dir_close(dir);
+              }
+              //printf("%d) %d\n", i, l);
 
+              //if (inode_is_removed(curr_inode)) {
+              //    printf("FOUND");
+              //}
+          }
+      }
     // TODO
   } else if (flag == 1) { // recover all non-empty sectors
     for (int i = 4; i < bitmap_size(free_map); i++) {
