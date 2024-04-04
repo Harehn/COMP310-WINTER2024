@@ -255,8 +255,21 @@ void recover(int flag) {
 
     // TODO
   } else if (flag == 1) { // recover all non-empty sectors
-
-    // TODO
+    for (int i = 4; i < bitmap_size(free_map); i++) {
+      char buffer[BLOCK_SECTOR_SIZE] = {0};
+      buffer_cache_read(i, buffer);
+      // Write into the recovered file if a nonzero character is found
+      for (int j = 0; j < BLOCK_SECTOR_SIZE; j++) {
+        if (buffer[j] != 0) {
+          char name[30];
+          sprintf(name, "recovered1-%d.txt", i);
+          FILE* file = fopen(name, "w");
+          fputs(buffer, file);
+          fclose(file);
+          break;
+        }
+      }
+    }
   } else if (flag == 2) { // data past end of file.
 
     // TODO
