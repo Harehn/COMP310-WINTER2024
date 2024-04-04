@@ -266,7 +266,7 @@ void recover(int flag) {
                   struct dir* root = dir_open_root();
                   bool is_dir = false;
                   dir_add(root, filename, i, is_dir);
-                  dir_close(dir);
+                  dir_close(root);
               }
               //printf("%d) %d\n", i, l);
 
