@@ -293,6 +293,7 @@ void recover(int flag) {
 
       for (int i = eof; i < BLOCK_SECTOR_SIZE; i++) {
         if (buffer[i] != 0) {
+          printf("entire: %s\nstart at %d: %s\n", buffer, i, &buffer[eof]);
           char fname[30+strlen(name)];
           sprintf(fname, "recovered2-%s.txt", name);
           FILE* f = fopen(fname, "w");
