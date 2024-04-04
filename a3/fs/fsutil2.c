@@ -285,7 +285,7 @@ void recover(int flag) {
         continue;
 
       struct file* file_s = get_file_by_fname(name);
-      char* buffer[BLOCK_SECTOR_SIZE] = {0};
+      char buffer[BLOCK_SECTOR_SIZE] = {0};
       block_sector_t* sectors = get_inode_data_sectors(file_s->inode);
       int last_sector = sectors[bytes_to_sectors(size)-1];
       // Only get the contents of the last sector
@@ -296,7 +296,7 @@ void recover(int flag) {
           char fname[30+strlen(name)];
           sprintf(fname, "recovered2-%s.txt", name);
           FILE* f = fopen(fname, "w");
-          fputs(buffer[eof], f);
+          fputs(&buffer[eof], f);
           fclose(f);
           break;
         }
