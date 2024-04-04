@@ -271,8 +271,38 @@ void recover(int flag) {
       }
     }
   } else if (flag == 2) { // data past end of file.
+    struct dir* dir;
+    dir = dir_open_root();
+    char name[NAME_MAX + 1];
+    
+    while (dir_readdir(dir, name)) {
+      int size = fsutil_size(name);
+      if (size == -1)
+        continue;
+      // If file takes up the entire block, there is nothing to read
+      int eof = size % BLOCK_SECTOR_SIZE;
+      if (eof == 0)
+        continue;
 
-    // TODO
+      struct file* file_s = get_file_by_fname(name);
+      char* buffer[BLOCK_SECTOR_SIZE] = {0};
+      block_sector_t* sectors = get_inode_data_sectors(file_s->inode);
+      int last_sector = sectors[bytes_to_sectors(size)-1];
+      // Only get the contents of the last sector
+      buffer_cache_read(last_sector, buffer);
+
+      for (int i = eof; i < BLOCK_SECTOR_SIZE; i++) {
+        if (buffer[i] != 0) {
+          char fname[30+strlen(name)];
+          sprintf(fname, "recovered2-%s.txt", name);
+          FILE* f = fopen(fname, "w");
+          fputs(buffer[eof], f);
+          fclose(f);
+          break;
+        }
+      }
+      free(sectors);
+    }
   }
 }
 
