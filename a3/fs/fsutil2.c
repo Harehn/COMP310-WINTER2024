@@ -290,14 +290,13 @@ void recover(int flag) {
       int last_sector = sectors[bytes_to_sectors(size)-1];
       // Only get the contents of the last sector
       buffer_cache_read(last_sector, buffer);
-      printf("%d %d %d\n", eof, buffer[eof], buffer[eof+1]);
       for (int i = eof; i < BLOCK_SECTOR_SIZE; i++) {
         if (buffer[i] != 0) {
-          printf("entire: %s\nstart at %d: %s\n", buffer, i, &buffer[eof]);
+          printf("entire: %s\nstart at %d: %s\n", buffer, i, &buffer[i]);
           char fname[30+strlen(name)];
           sprintf(fname, "recovered2-%s.txt", name);
           FILE* f = fopen(fname, "w");
-          fputs(&buffer[eof], f);
+          fputs(&buffer[i], f);
           fclose(f);
           break;
         }
