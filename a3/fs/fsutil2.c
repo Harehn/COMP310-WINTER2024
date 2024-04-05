@@ -260,13 +260,15 @@ void recover(int flag) {
               //printf("\nSector %d)", i);
               curr_inode = inode_open(i);
               int l = inode_length(curr_inode);
-              if (l > 0) {
-                  char filename[30];
-                  sprintf(filename, "recovered0-%d", i);
-                  struct dir* root = dir_open_root();
-                  bool is_dir = false;
-                  dir_add(root, filename, i, is_dir);
-                  dir_close(root);
+              if (l > 0) { //If the inode points to data
+                  if (inode_is_directory(curr_inode)) {
+                      char filename[30];
+                      sprintf(filename, "recovered0-%d", i);
+                      struct dir* root = dir_open_root();
+                      bool is_dir = false; // Set to false as we are adding a file and not a directory
+                      dir_add(root, filename, i, is_dir);
+                      dir_close(root);
+                  }
               }
               //printf("%d) %d\n", i, l);
 
