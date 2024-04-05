@@ -261,7 +261,7 @@ void recover(int flag) {
               curr_inode = inode_open(i);
               int l = inode_length(curr_inode);
               if (l > 0) { //If the inode points to data
-                  if (inode_is_directory(curr_inode)) {
+                  if (! inode_is_directory(curr_inode)) {
                       char filename[30];
                       sprintf(filename, "recovered0-%d", i);
                       struct dir* root = dir_open_root();
