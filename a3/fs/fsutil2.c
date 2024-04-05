@@ -27,6 +27,11 @@ struct file_elem {
 
 int copyable_size_of_file(int size);
 
+/*
+* Get the size of the input file
+* Open a 'file' on the 'hard disk' of that size
+* Write the contents of the input file into the output file using a buffer
+*/
 int copy_in(char *fname) {
   // Get the size
   FILE* file = fopen(fname, "r");
@@ -44,7 +49,7 @@ int copy_in(char *fname) {
     return 2;  // No memory space error
   }
 
-  fsutil_create(fname, copy_size);
+  fsutil_create(fname, copy_size); //Create file
 
   char* buffer = malloc(copy_size + 1 * sizeof(char));
   memset(buffer, 0, copy_size);
@@ -56,62 +61,69 @@ int copy_in(char *fname) {
     printf("Warning: could only write %d out of %ld bytes (reached end of file\n", copy_size, size);
   }
 
+  //Reset pointer of the file to the start
   struct file* file_s = get_file_by_fname(fname);
   file_seek(file_s, 0);
-
-
-  //char* buffer = malloc(11 * sizeof(char));
-  //memset(buffer, 0, 10);
-  //while (fgets(buffer, 10, file)) {
-  //    fsutil_write(fname, buffer, 10);
-  //    memset(buffer, 0, 10);
-  //}
-  //memset(buffer, 0, 10);
-
-
   fclose(file);
   return 0;
 }
 
+/*
+* Get the size of the 'file' on the 'hard disk'
+* Write the contents of the 'file' in a buffer
+* Create the output file and write the content 
+*/
 int copy_out(char *fname) {
+    //Get the size and check if everything is okay
     int size = fsutil_size(fname);
     if (size == -1) {
       return 1;  // File does not exist error
     }
+    // keep track of the original position of the pointer
     struct file *file_s = get_file_by_fname(fname);
     offset_t offset = file_s->pos;
     file_seek(file_s, 0);
     
+    //Create a buffer and write the content into the buffer
     char* buffer = malloc((size + 1) * sizeof(char));
     memset(buffer, 0, size + 1);
     fsutil_read(fname, buffer, size);
-    //printf(buffer);
+    //Open and write content into output file
     FILE* file = fopen(fname, "w");
     if (file == NULL) {
         printf("file does not exist");
         return 12;  // File write error
     }
     fputs(buffer, file);
+
+    //Clear out resources
     fclose(file);
-    
-    free(buffer);
+    free(buffer); 
+
+    //Reset pointer
     file_seek(file_s, offset);
   return 0;
 }
 
+/*
+* Open root directory
+* Iterate through each file and open the content
+* Math the pattern and print the filename
+*/
 void find_file(char *pattern) {
-  //printf("SIZE: %d", length);
+  //Open root directory
   struct dir* dir;
   char name[NAME_MAX + 1];
   dir = dir_open_root();
   if (dir == NULL)
       return;
+  // Iterate through directory
   while (dir_readdir(dir, name)) {
-      //printf("%s\n", name);
       int size = fsutil_size(name);
       if (size == -1) {
           return;  // File does not exist error
       }
+      // keep track of the original position of the pointer
       struct file* file_s = get_file_by_fname(name);
       offset_t offset = file_s->pos;
       file_seek(file_s, 0);
@@ -125,6 +137,7 @@ void find_file(char *pattern) {
         printf("%s\n", name);
       }
 
+      // Reset pointer
       file_seek(file_s, offset);
       free(buffer);
   }
@@ -133,7 +146,13 @@ void find_file(char *pattern) {
   return;
 }
 
+/*
+* Open and iterate through the root directory
+* If file has more than 2 data block, increase number of fragmentable files
+* Go through the data blocks in order. If the difference between 2 consecutive blocks' index >3, the file is fragmented
+*/
 void fragmentation_degree() {
+    //Open root directory
     struct dir* dir;
     char name[NAME_MAX + 1];
     dir = dir_open_root();
@@ -141,37 +160,40 @@ void fragmentation_degree() {
         return;
     int fragmentable = 0;
     int fragmented = 0;
+    //Iterate through directory
     while (dir_readdir(dir, name)) {
         int size = fsutil_size(name);
         if (size == -1) {
             return;  // File does not exist error
         }
+        // keep track of the original position of the pointer
         struct file* file_s = get_file_by_fname(name);
         offset_t offset = file_s->pos;
         file_seek(file_s, 0);
 
-        //printf("\nMain Sector: %d\n",file_s->inode->sector);
+        // Get the data Sectors
         struct inode *main = file_s->inode;
         block_sector_t* all_sectors = get_inode_data_sectors(main);
         int file_size = fsutil_size(name);
         int inode_number = bytes_to_sectors(file_size);
 
+        //Iterate through the data sectors
         int index = 0;
         block_sector_t previous = all_sectors[index];
         for (index = 1; index < inode_number; index++) {
-            if (all_sectors[index] - previous > 3) {
-                //printf("| %d || %d |\n", all_sectors[index], previous);
+            if (all_sectors[index] - previous > 3) { //File is fragmented if the difference >3
                 fragmented += 1;
                 break;
             }
             previous = all_sectors[index];
         }
-        if (inode_number > 1) {
+
+        if (inode_number > 1) {//2 more data blocks mean that file is fragmentable
             fragmentable += 1;
         }
         
         free(all_sectors);
-        file_seek(file_s, offset);
+        file_seek(file_s, offset); // Reset file pointer
     }
     printf("Num fragmentable files: %d\n", fragmentable);
     printf("Num fragmented files: %d\n", fragmented);
@@ -252,32 +274,30 @@ int defragment() {
 
 void recover(int flag) {
   if (flag == 0) { // recover deleted inodes
+      /*
+      * We look at the free sectors on the Hard disk. If the corresponding inode points to data and it is not a
+      * directory, we restore the inode ie add it to the root directory.
+      */
       int count = bitmap_size(free_map);
-      for (int i = 0; i < count; i++) {
-          int free = bitmap_test(free_map, i);
+      // We iterate through the bitmap and look at the free sectors on the bitmap
+      for (int sector = 0; sector < count; sector++) {
+          int free = bitmap_test(free_map, sector);
           struct inode* curr_inode;
           if (!free) {
-              //printf("\nSector %d)", i);
-              curr_inode = inode_open(i);
-              int l = inode_length(curr_inode);
-              if (l > 0) { //If the inode points to data
-                  if (! inode_is_directory(curr_inode)) {
+              curr_inode = inode_open(sector);
+              int has_data = inode_length(curr_inode);
+              if (has_data > 0) { //If the inode points to data
+                  if (! inode_is_directory(curr_inode)) { //If the data is not a directory
                       char filename[30];
-                      sprintf(filename, "recovered0-%d", i);
+                      sprintf(filename, "recovered0-%d", sector);
                       struct dir* root = dir_open_root();
                       bool is_dir = false; // Set to false as we are adding a file and not a directory
-                      dir_add(root, filename, i, is_dir);
+                      dir_add(root, filename, sector, is_dir);
                       dir_close(root);
                   }
               }
-              //printf("%d) %d\n", i, l);
-
-              //if (inode_is_removed(curr_inode)) {
-              //    printf("FOUND");
-              //}
           }
       }
-    // TODO
   } else if (flag == 1) { // recover all non-empty sectors
     for (int i = 4; i < bitmap_size(free_map); i++) {
       char buffer[BLOCK_SECTOR_SIZE] = {0};
