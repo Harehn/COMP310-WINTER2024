@@ -347,6 +347,7 @@ void recover(int flag) {
       }
       free(sectors);
     }
+    dir_close(dir);
   }
 }
 
