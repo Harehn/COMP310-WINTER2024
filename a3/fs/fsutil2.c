@@ -286,7 +286,7 @@ void recover(int flag) {
           if (!free) {
               curr_inode = inode_open(sector);
               int has_data = inode_length(curr_inode);
-              if (has_data > 0) { //If the inode points to data
+              if (has_data > 0 && curr_inode->data.magic == INODE_MAGIC) { //If current block is an inode
                   if (! inode_is_directory(curr_inode)) { //If the data is not a directory
                       char filename[30];
                       sprintf(filename, "recovered0-%d", sector);
